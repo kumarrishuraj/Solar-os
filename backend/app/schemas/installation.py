@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime
 from decimal import Decimal
 from typing import Optional, List, Dict, Any
-from pydantic import BaseModel, Field, AliasChoices, ConfigDict
+from pydantic import BaseModel, Field, AliasChoices
 
 
 class ChecklistItemUpdate(BaseModel):
@@ -60,7 +60,8 @@ class ChecklistItemResponse(BaseModel):
     completed_at: Optional[datetime] = None
     remarks: Optional[str] = None
 
-    model_config = ConfigDict(from_attributes=True)
+    class Config:
+        from_attributes = True
 
 
 class InstallationResponse(BaseModel):
@@ -82,4 +83,5 @@ class InstallationResponse(BaseModel):
     updated_at: datetime
     checklist: List[ChecklistItemResponse] = Field(default_factory=list, validation_alias=AliasChoices("checklist", "checklist_items"))
 
-    model_config = ConfigDict(from_attributes=True)
+    class Config:
+        from_attributes = True

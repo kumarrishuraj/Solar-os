@@ -1,7 +1,7 @@
 """Authentication and Identity Routes."""
 
 import uuid
-from typing import Optional
+from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
@@ -75,3 +75,18 @@ def get_demo_token(payload: DemoTokenRequest, db: Session = Depends(get_db)) -> 
 
     token_dict = issue_token_for_user(user)
     return Token(**token_dict)
+
+
+@router.get(
+    "/staff",
+    response_model=List[UserResponse],
+    summary="List Operational Staff",
+    description="Returns staff directory filtered by operational role.",
+)
+def list_staff(role: Optional[str] = None, db: Session = Depends(get_db)) -> List[UserResponse]:
+    """Retrieve staff list."""
+    query = db.query(UserModel).filter(UserModel.is_active == True)
+    if role:
+        query = query.filter(UserModel.role == role.lower().strip())
+    users = query.all()
+    return [UserResponse.model_validate(u) for u in users]

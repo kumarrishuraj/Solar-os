@@ -40,6 +40,11 @@ async def lifespan(app: FastAPI):
     """Application startup and shutdown lifecycle management."""
     # Ensure local upload directory exists
     os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+    # Ensure database schema tables exist (auto-create for SQLite or initial setup)
+    Base.metadata.create_all(bind=engine)
+    with SessionLocal() as db:
+        from app.services.auth_service import seed_default_users_if_needed
+        seed_default_users_if_needed(db)
     yield
 
 
