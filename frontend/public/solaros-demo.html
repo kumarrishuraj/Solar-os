@@ -1,0 +1,797 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SolarOS — Solar Operations Management</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --canvas:#F1F2EF;--card:#FFFFFF;--hero:#C5D1C5;--hero-soft:#D5DED3;
+  --sb:#292C29;--sb-acc:#3B423A;--sb-fg:#B9BFB7;
+  --forest:#55764D;--forest-d:#46633F;--lime:#A8CE45;--lime-soft:#EEF5DA;
+  --sage:#829B83;--sage-soft:#E7ECE6;--ink:#252925;--muted:#858B84;
+  --border:#E7E9E4;--track:#ECEEE9;
+  --success:#5B9B64;--success-soft:#E5F0E6;--warning:#D9A441;--warning-soft:#F8EFDB;
+  --danger:#C96B61;--danger-soft:#F6E5E2;
+  --shadow:0 1px 2px rgba(37,41,37,.04),0 2px 12px -4px rgba(37,41,37,.07);
+  --pop:0 16px 40px -14px rgba(37,41,37,.28),0 2px 6px rgba(37,41,37,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%}
+body{font-family:Geist,Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--canvas);color:var(--ink);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+a{color:inherit;text-decoration:none}
+svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.mono{font-family:"Geist Mono",ui-monospace,monospace;font-size:12.5px}
+.num{font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+/* ---------- shell ---------- */
+.sb{position:fixed;inset:0 auto 0 0;width:84px;background:var(--sb);color:var(--sb-fg);display:flex;flex-direction:column;z-index:40;transition:width .2s ease,transform .2s ease}
+.sb.open{width:244px}
+.main{margin-left:84px;min-width:0;transition:margin .2s ease}
+body.sb-open .main{margin-left:244px}
+.sb-top{height:68px;display:flex;align-items:center;gap:11px;padding:0 22px;flex-shrink:0}
+.logo{width:40px;height:40px;flex-shrink:0;display:block}
+.brand{font-weight:600;font-size:17px;color:#fff;letter-spacing:-.015em;white-space:nowrap;display:none}
+.brand b{color:var(--lime);font-weight:600}
+.sb.open .brand{display:block}
+.nav{flex:1;overflow-y:auto;padding:4px 14px 10px;scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.grp{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:rgba(185,191,183,.5);padding:14px 10px 6px;white-space:nowrap;display:none}
+.sb.open .grp{display:block}
+.sep{height:1px;background:rgba(255,255,255,.07);margin:8px 12px}
+.sb.open .sep{display:none}
+.nv{position:relative;display:flex;align-items:center;gap:12px;height:40px;border-radius:10px;padding:0 15px;color:var(--sb-fg);white-space:nowrap;transition:background .15s,color .15s;width:100%;text-align:left}
+.nv:hover{background:rgba(59,66,58,.6);color:#fff}
+.nv.act{background:var(--sb-acc);color:#fff}
+.nv.act::before{content:"";position:absolute;left:-14px;top:9px;bottom:9px;width:3px;border-radius:0 3px 3px 0;background:var(--lime)}
+.nv span{display:none;font-size:13.5px}
+.sb.open .nv span{display:inline}
+.sb-bot{padding:10px 14px 16px;border-top:1px solid rgba(255,255,255,.07);display:grid;gap:4px}
+.me{display:flex;align-items:center;gap:10px;padding:8px 8px;border-radius:10px}
+.me .who{display:none;min-width:0}
+.sb.open .me .who{display:block}
+.me .who b{display:block;color:#fff;font-weight:500;font-size:13px}
+.me .who small{font-size:11.5px;color:var(--sb-fg)}
+.tip{position:fixed;z-index:90;background:var(--sb);color:#fff;font-size:12px;padding:6px 9px;border-radius:7px;pointer-events:none;box-shadow:var(--pop);white-space:nowrap;display:none}
+.top{height:68px;display:flex;align-items:center;gap:10px;padding:0 28px;position:sticky;top:0;background:rgba(241,242,239,.9);backdrop-filter:blur(6px);z-index:30}
+.crumb{font-size:13px;color:var(--muted);white-space:nowrap;display:flex;align-items:center;gap:6px}
+.crumb b{color:var(--ink);font-weight:500}
+.search{position:relative;flex:1;max-width:460px;margin-left:auto}
+.search .box{display:flex;align-items:center;gap:8px;height:38px;padding:0 12px;background:#fff;border:1px solid var(--border);border-radius:10px;color:var(--muted)}
+.search input{border:0;outline:0;flex:1;background:transparent;color:var(--ink);min-width:0}
+.kbd{font-size:11px;border:1px solid var(--border);border-radius:6px;padding:1px 6px;color:var(--muted)}
+.ib{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;background:#fff;border:1px solid var(--border);color:var(--ink);position:relative;flex-shrink:0}
+.ib:hover{background:#F7F8F5}
+.cnt{position:absolute;top:-5px;right:-5px;min-width:18px;height:18px;border-radius:9px;background:var(--danger);color:#fff;font-size:10.5px;font-weight:600;display:grid;place-items:center;padding:0 5px;border:2px solid var(--canvas)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:36px;padding:0 14px;border-radius:10px;font-weight:500;font-size:13.5px;transition:background .15s;white-space:nowrap}
+.btn svg.i{width:16px;height:16px}
+.btn-p{background:var(--forest);color:#fff}.btn-p:hover{background:var(--forest-d)}
+.btn-o{background:#fff;border:1px solid var(--border)}.btn-o:hover{background:#F6F7F4}
+.btn-l{background:var(--lime);color:var(--ink)}.btn-l:hover{filter:brightness(.97)}
+.btn-g{color:var(--forest)}.btn-g:hover{background:var(--sage-soft)}
+.btn-d{background:var(--danger-soft);color:#A4483F}
+.btn-sm{height:30px;padding:0 10px;font-size:12.5px;border-radius:8px}
+.av{width:36px;height:36px;border-radius:50%;background:var(--sage-soft);color:var(--forest);display:grid;place-items:center;font-weight:600;font-size:12.5px;flex-shrink:0}
+.sb .av{background:#3B423A;color:var(--lime)}
+.pop{position:absolute;top:46px;right:0;width:380px;max-width:calc(100vw - 24px);background:#fff;border:1px solid var(--border);border-radius:16px;box-shadow:var(--pop);padding:8px;z-index:50}
+.pop h4{font-size:13.5px;font-weight:500;padding:8px 10px;display:flex;justify-content:space-between;align-items:center}
+.rel{position:relative}
+.page{padding:6px 28px 48px;max-width:1600px;margin:0 auto}
+/* ---------- primitives ---------- */
+.grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:18px}
+.c3{grid-column:span 3}.c4{grid-column:span 4}.c5{grid-column:span 5}.c6{grid-column:span 6}.c7{grid-column:span 7}.c8{grid-column:span 8}.c12{grid-column:span 12}
+.card{background:#fff;border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);padding:20px;min-width:0}
+.ch{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.ch .grow{flex:1;min-width:0}
+.ct{font-size:15px;font-weight:500;letter-spacing:-.01em}
+.cd{font-size:12.5px;color:var(--muted)}
+.tile{width:32px;height:32px;border-radius:9px;background:var(--sage-soft);color:var(--forest);display:grid;place-items:center;flex-shrink:0}
+.tile svg.i{width:16px;height:16px}
+.lbl{font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.stat{font-size:26px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.15}
+.chip{display:inline-flex;align-items:center;gap:3px;font-size:11.5px;font-weight:500;padding:2px 7px;border-radius:999px}
+.up{background:var(--success-soft);color:#3F7A48}.down{background:var(--danger-soft);color:#A4483F}
+.badge{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:500;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.badge::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.b-success{background:var(--success-soft);color:#3F7A48}.b-warning{background:var(--warning-soft);color:#946A1B}
+.b-danger{background:var(--danger-soft);color:#A4483F}.b-forest{background:#E2EADF;color:var(--forest-d)}
+.b-lime{background:var(--lime-soft);color:#5A7613}.b-neutral{background:var(--track);color:#5E645D}.b-sage{background:var(--sage-soft);color:var(--forest)}
+.demo{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:500;padding:3px 10px;border-radius:999px;background:var(--sage-soft);color:var(--forest);white-space:nowrap}
+.demo::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--lime)}
+.bar{height:8px;border-radius:999px;background:var(--track);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:999px;background:var(--forest);transition:width .4s ease}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:left;padding:10px 14px;border-bottom:1px solid var(--border);white-space:nowrap}
+.tbl td{padding:12px 14px;border-bottom:1px solid #EEF0EB;white-space:nowrap}
+.tbl tr:last-child td{border-bottom:0}
+.tbl tbody tr{transition:background .12s}
+.tbl tbody tr:hover td{background:#F7F8F5}
+.tbl tr.click{cursor:pointer}
+.tw{overflow-x:auto;margin:0 -20px;padding:0 6px}
+.r{text-align:right!important}
+.ph{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:10px 0 20px}
+.ph h1{font-size:28px;font-weight:600;letter-spacing:-.02em;line-height:1.2}
+.ph p{color:var(--muted);margin-top:4px}
+.acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.tool{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.inp{height:38px;border:1px solid #E1E4DE;border-radius:10px;padding:0 12px;background:#fff;outline:0;width:100%;transition:border .15s,box-shadow .15s}
+.inp:focus{border-color:rgba(85,118,77,.55);box-shadow:0 0 0 3px rgba(85,118,77,.14)}
+textarea.inp{height:auto;padding:10px 12px;resize:vertical}
+.field{display:grid;gap:6px;margin-bottom:12px}
+.field label{font-size:12.5px;font-weight:500}
+.err{font-size:12px;color:var(--danger);min-height:0}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+.pager{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:14px;font-size:12.5px;color:var(--muted)}
+/* ---------- hero ---------- */
+.hero{background:var(--hero);border-radius:22px;padding:26px 30px 24px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:12px;position:relative;overflow:hidden;margin-bottom:18px}
+.hero .bc{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:#4E594D;background:rgba(255,255,255,.45);padding:4px 10px;border-radius:999px}
+.hero h1{font-size:31px;line-height:1.12;font-weight:600;letter-spacing:-.005em;margin:16px 0 10px;text-transform:uppercase;max-width:520px}
+.hero p.sub{color:#4A5449;max-width:440px;font-size:14.5px}
+.hw{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:24px;max-width:540px}
+.wg{background:rgba(255,255,255,.78);border-radius:16px;padding:16px;border:1px solid rgba(255,255,255,.7)}
+.illu{position:relative;min-height:300px;display:flex;align-items:center}
+.illu svg{width:100%;height:auto;max-height:350px;display:block}
+.kpis{position:absolute;bottom:2px;right:6px;display:flex;gap:10px}
+.kpi{background:#fff;border-radius:14px;padding:10px 14px;box-shadow:var(--pop);display:flex;align-items:center;gap:10px}
+.kpi .tile{width:34px;height:34px}
+.mb{display:grid;gap:7px;margin-top:10px}
+.mb div{display:grid;grid-template-columns:86px 1fr 18px;align-items:center;gap:8px;font-size:11.5px;color:#5A6259}
+.mb .bar{height:6px}
+/* ---------- lists ---------- */
+.nl{display:flex;gap:12px;padding:12px 10px;border-radius:12px;cursor:pointer;transition:background .12s}
+.nl:hover{background:#F7F8F5}
+.nl .tile{width:36px;height:36px;border-radius:10px}
+.nl b{font-weight:500;font-size:13.5px;display:block}
+.nl p{font-size:12.5px;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.nl .meta{display:flex;gap:8px;align-items:center;margin-top:5px;font-size:11.5px;color:var(--muted)}
+.unread{width:7px;height:7px;border-radius:50%;background:var(--lime);flex-shrink:0;margin-top:6px}
+.t-urgent{background:var(--danger-soft);color:#A4483F}.t-warning{background:var(--warning-soft);color:#946A1B}.t-info{background:var(--sage-soft);color:var(--forest)}
+.tl{position:relative;padding-left:4px}
+.tl .it{display:flex;gap:12px;position:relative;padding-bottom:16px}
+.tl .it:last-child{padding-bottom:0}
+.tl .it::before{content:"";position:absolute;left:15px;top:32px;bottom:2px;width:1px;background:var(--border)}
+.tl .it:last-child::before{display:none}
+.tl .tile{width:32px;height:32px;border-radius:50%}
+.tl b{font-weight:500;font-size:13.5px}
+.tl p{font-size:12.5px;color:var(--muted)}
+.pr{display:grid;gap:8px;padding:12px 0;border-bottom:1px solid #EEF0EB}
+.pr:last-child{border-bottom:0}
+.pr .row{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.om{display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid #EEF0EB}
+.om:last-child{border-bottom:0}
+.pp{display:grid;grid-template-columns:118px 1fr 34px;gap:10px;align-items:center;font-size:12.5px;padding:6px 0;cursor:pointer}
+.pp .bar{height:10px;border-radius:6px}
+.pp .bar i{border-radius:6px}
+.seg{display:inline-flex;background:var(--track);padding:3px;border-radius:10px}
+.seg button{height:28px;padding:0 11px;border-radius:8px;font-size:12.5px;color:var(--muted);font-weight:500}
+.seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--muted);flex-wrap:wrap}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.chartwrap{position:relative}
+.ttip{position:absolute;pointer-events:none;background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:var(--pop);padding:9px 11px;font-size:12px;min-width:170px;display:none;z-index:5}
+.ttip div{display:flex;justify-content:space-between;gap:12px}
+/* ---------- overlays ---------- */
+.ov{position:fixed;inset:0;background:rgba(37,41,37,.32);display:grid;place-items:center;z-index:60;padding:16px;backdrop-filter:blur(1.5px)}
+.modal{background:#fff;border-radius:18px;box-shadow:var(--pop);width:min(560px,100%);padding:22px;max-height:92vh;overflow:auto;animation:din2 .18s ease}
+.modal.wide{width:min(860px,100%)}
+@keyframes din2{from{opacity:0;transform:translateY(8px)}}
+.mh{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:16px}
+.mh h3{font-size:17px;font-weight:600;letter-spacing:-.01em}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(460px,100%);background:#fff;box-shadow:var(--pop);z-index:70;padding:22px;overflow:auto;animation:din .2s ease}
+@keyframes din{from{transform:translateX(30px);opacity:0}}
+.toasts{position:fixed;top:16px;right:16px;display:grid;gap:8px;z-index:95}
+.toast{background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:var(--pop);padding:12px 14px;display:flex;gap:10px;align-items:center;font-size:13px;min-width:280px;max-width:380px;animation:din2 .2s ease}
+.toast svg.i{color:var(--forest)}
+.dl{display:grid;grid-template-columns:1fr 1fr;gap:14px 16px;margin:14px 0}
+.dl .lbl{margin-bottom:3px}
+.ck{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;cursor:pointer;font-size:13.5px}
+.ck:hover{background:#F7F8F5}
+.ck .box2{width:20px;height:20px;border-radius:6px;border:1.5px solid #C9CFC6;display:grid;place-items:center;flex-shrink:0}
+.ck.on .box2{background:var(--forest);border-color:var(--forest);color:#fff}
+.ck.on span{color:var(--muted);text-decoration:line-through}
+.banner{display:flex;gap:10px;align-items:flex-start;background:var(--warning-soft);color:#6E5016;border-radius:12px;padding:12px 14px;font-size:13px}
+/* ---------- enquiry & chat ---------- */
+.pub{min-height:100vh;background:var(--canvas)}
+.pubtop{height:68px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;max-width:1200px;margin:0 auto}
+.pubhero{max-width:1200px;margin:0 auto 24px;padding:0 28px}
+.pubhero .in{background:var(--hero);border-radius:24px;padding:40px;display:grid;grid-template-columns:1.1fr .9fr;gap:24px;align-items:center}
+.pubhero h1{font-size:34px;line-height:1.15;font-weight:600;letter-spacing:-.02em}
+.opt{display:flex;gap:14px;background:#fff;border-radius:16px;padding:18px;border:1px solid var(--border);box-shadow:var(--shadow);cursor:pointer;text-align:left;transition:transform .15s,box-shadow .15s;width:100%}
+.opt:hover{transform:translateY(-1px);box-shadow:var(--pop)}
+.chat{max-width:820px;margin:0 auto;padding:0 28px 40px}
+.msgs{display:grid;gap:12px;padding:18px;min-height:360px;max-height:58vh;overflow:auto}
+.msg{max-width:78%;padding:11px 14px;border-radius:16px;font-size:14px;line-height:1.5;animation:din2 .18s ease}
+.bot{background:var(--sage-soft);border-top-left-radius:6px}
+.usr{background:var(--forest);color:#fff;justify-self:end;border-top-right-radius:6px}
+.qr{display:flex;flex-wrap:wrap;gap:8px;padding:0 18px 12px}
+.qr button{border:1px solid var(--border);background:#fff;border-radius:999px;padding:7px 13px;font-size:12.5px;font-weight:500;color:var(--forest-d)}
+.qr button:hover{background:var(--sage-soft)}
+.compose{display:flex;gap:8px;padding:14px 18px;border-top:1px solid var(--border)}
+.typing{display:inline-flex;gap:4px}
+.typing i{width:6px;height:6px;border-radius:50%;background:var(--sage);animation:bl 1s infinite}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes bl{0%,100%{opacity:.3}50%{opacity:1}}
+.ans{background:#fff;border:1px solid var(--border);border-radius:16px;padding:14px;max-width:100%;width:100%;animation:din2 .18s ease}
+.fn{display:inline-flex;gap:6px;align-items:center;font-size:11.5px;color:var(--muted);background:#F6F7F4;border:1px solid var(--border);border-radius:8px;padding:3px 8px;margin-bottom:10px}
+.mets{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:10px}
+.mets>div{background:#F7F8F5;border-radius:12px;padding:12px}
+/* ---------- assessment ---------- */
+.stage{position:relative;border-radius:14px;overflow:hidden;background:#DDD8CC;aspect-ratio:4/3}
+.stage img,.stage>svg.photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.stage svg.ovl{position:absolute;inset:0;width:100%;height:100%}
+.drop{border:1.5px dashed #C9CFC6;border-radius:14px;padding:22px;text-align:center;background:#FAFBF8;cursor:pointer}
+.drop:hover{border-color:var(--forest);background:var(--sage-soft)}
+.steps{display:grid;gap:8px;margin-top:12px}
+.steps div{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--muted)}
+.steps div.done{color:var(--ink)}
+.spin{width:14px;height:14px;border-radius:50%;border:2px solid var(--track);border-top-color:var(--forest);animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.lay{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.lay label{display:inline-flex;gap:6px;align-items:center;font-size:12.5px;background:#F6F7F4;border:1px solid var(--border);border-radius:999px;padding:4px 10px;cursor:pointer}
+.conf{display:grid;grid-template-columns:1fr 70px 38px;gap:10px;align-items:center;font-size:13px;padding:8px 0;border-bottom:1px solid #EEF0EB}
+.conf .bar{height:6px}
+/* ---------- quotation print ---------- */
+.qdoc{border:1px solid var(--border);border-radius:12px;padding:26px;font-size:13px}
+.qdoc table{width:100%;border-collapse:collapse;margin:14px 0}
+.qdoc th{text-align:left;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);padding:8px 6px;font-weight:500}
+.qdoc td{padding:9px 6px;border-bottom:1px solid #EEF0EB}
+.tot{margin-left:auto;width:min(320px,100%);display:grid;gap:6px}
+.tot div{display:flex;justify-content:space-between}
+.tot .g{font-size:16px;font-weight:600;border-top:1px solid var(--border);padding-top:8px}
+@media print{
+  body *{visibility:hidden}
+  .qdoc,.qdoc *{visibility:visible}
+  .qdoc{position:absolute;left:0;top:0;width:100%;border:0}
+}
+/* ---------- responsive ---------- */
+@media (max-width:1279px){.c3,.c4{grid-column:span 6}.c5,.c7,.c8{grid-column:span 12}.hero{grid-template-columns:1fr}.illu{min-height:auto}}
+@media (max-width:900px){.c6{grid-column:span 12}.pubhero .in{grid-template-columns:1fr}}
+@media (max-width:767px){
+  .sb{transform:translateX(-100%);width:244px}
+  .sb.mob{transform:none}
+  .sb.mob .brand,.sb.mob .grp{display:block}.sb.mob .nv span{display:inline}.sb.mob .me .who{display:block}.sb.mob .sep{display:none}
+  .main,body.sb-open .main{margin-left:0}
+  .top{padding:0 14px}.page{padding:6px 16px 36px}
+  .search .kbd,.hide-sm{display:none!important}
+  .c3,.c4,.c5,.c6,.c7,.c8{grid-column:span 12}
+  .hw{grid-template-columns:1fr}.hero{padding:20px}.hero h1{font-size:23px}
+  .kpis{position:static;margin-top:8px;flex-wrap:wrap}
+  .ph h1{font-size:23px}.two,.dl{grid-template-columns:1fr}
+  .pubhero .in{padding:24px}.pubhero h1{font-size:26px}.pubtop,.pubhero,.chat{padding-left:16px;padding-right:16px}
+  .msg{max-width:90%}
+}
+@media (min-width:768px){.mob-only{display:none!important}}
+.scrim{position:fixed;inset:0;background:rgba(37,41,37,.35);z-index:39}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div class="toasts" id="toasts"></div>
+<div class="tip" id="tip"></div>
+<script>
+/* =====================================================================
+   SolarOS — standalone interactive demo (demonstration data)
+   ===================================================================== */
+const ICONS={
+dash:'<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
+userPlus:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/>',
+users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+scan:'<path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 12h10M12 7v10"/>',
+clip:'<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/>',
+sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',
+file:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/>',
+wallet:'<path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>',
+pkg:'<path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/>',
+cpu:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3"/>',
+wrench:'<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
+act:'<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>',
+shield:'<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>',
+spark:'<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 3v4M21 5h-4M5 17v3M6.5 18.5h-3"/>',
+gear:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
+logout:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',
+search:'<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
+bell:'<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+plus:'<path d="M12 5v14M5 12h14"/>',menu:'<path d="M4 6h16M4 12h16M4 18h16"/>',
+chev:'<path d="m9 18 6-6-6-6"/>',chevL:'<path d="m15 18-6-6 6-6"/>',x:'<path d="M18 6 6 18M6 6l12 12"/>',
+trend:'<path d="m22 7-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/>',check:'<path d="M20 6 9 17l-5-5"/>',
+checkc:'<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',alert:'<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4M12 17h.01"/>',
+cal:'<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',send:'<path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/>',
+dl:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>',print:'<path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>',
+upload:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>',bot:'<rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 8V4M8 14h.01M16 14h.01M9 18h6"/>',
+form:'<path d="M9 11h6M9 15h4M7 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/>',plug:'<path d="M12 22v-5M9 8V2M15 8V2M18 8v4a6 6 0 0 1-12 0V8z"/>',
+home:'<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',zap:'<path d="M13 2 3 14h9l-1 8 10-12h-9z"/>'
+};
+const I=(n,s)=>`<svg class="i" viewBox="0 0 24 24"${s?` style="width:${s}px;height:${s}px"`:''}>${ICONS[n]||''}</svg>`;
+const LOGO=`<svg class="logo" viewBox="0 0 40 40" aria-label="SolarOS"><rect width="40" height="40" rx="11" fill="#55764D"/><path d="M11 18.5a9 9 0 0 1 18 0" fill="#A8CE45"/><path d="M20 6.5v2.6M11.6 10l1.8 1.8M28.4 10l-1.8 1.8" stroke="#A8CE45" stroke-width="2" stroke-linecap="round"/><path d="M8.5 31.5 12 21h16l3.5 10.5z" fill="#2F3B47"/><path d="M10.2 26.3h19.6M17.2 21l-1 10.5M22.8 21l1 10.5" stroke="#8FA3B6" stroke-width=".9" opacity=".8"/></svg>`;
+
+/* ---------- formatting ---------- */
+const trim=s=>s.includes('.')?s.replace(/\.?0+$/,''):s;
+const inr=v=>'₹'+Math.round(v).toLocaleString('en-IN');
+const lakh=v=>Math.abs(v)>=1e7?'₹'+trim((v/1e7).toFixed(2))+' Cr':Math.abs(v)>=1e5?'₹'+trim((v/1e5).toFixed(2))+' L':inr(v);
+const dshort=s=>new Date(s).toLocaleDateString('en-IN',{day:'numeric',month:'short',timeZone:'Asia/Kolkata'});
+const dlong=s=>new Date(s).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Kolkata'});
+function ago(s){const m=(Date.now()-new Date(s).getTime())/6e4;if(m<1)return'just now';if(m<60)return Math.round(m)+' min ago';if(m<1440)return Math.round(m/60)+' h ago';const d=Math.round(m/1440);return d===1?'yesterday':d<7?d+' days ago':dshort(s)}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ini=n=>n.split(/\s+/).map(p=>p[0]).slice(0,2).join('').toUpperCase();
+
+/* ---------- status vocabulary ---------- */
+const ST={new:['New','lime'],contacted:['Contacted','neutral'],qualified:['Qualified','forest'],survey_scheduled:['Survey scheduled','warning'],quotation_sent:['Quotation sent','warning'],converted:['Converted','success'],lost:['Lost','danger'],pending:['Pending','warning'],in_progress:['In progress','forest'],submitted:['Submitted','warning'],approved:['Approved','success'],rejected:['Rejected','danger'],draft:['Draft','neutral'],sent:['Sent','warning'],expired:['Expired','neutral'],completed:['Completed','success'],partial:['Partial','warning'],overdue:['Overdue','danger'],in_stock:['In stock','success'],low_stock:['Low stock','warning'],out_of_stock:['Out of stock','danger'],in_warehouse:['In warehouse','neutral'],reserved:['Reserved','warning'],dispatched:['Dispatched','forest'],installed:['Installed','success'],scheduled:['Scheduled','neutral'],inspection:['Inspection','warning'],commissioned:['Commissioned','success'],delayed:['Delayed','danger'],open:['Open','warning'],resolved:['Resolved','success'],closed:['Closed','neutral'],low:['Low','neutral'],medium:['Medium','warning'],high:['High','danger'],critical:['Critical','danger'],not_connected:['Not connected','neutral'],active:['Active','success'],expiring:['Expiring soon','warning']};
+const badge=s=>{const m=ST[s]||[s,'neutral'];return `<span class="badge b-${m[1]}">${m[0]}</span>`};
+
+/* ---------- demo data ---------- */
+let LEADS=[
+['Divya Pillai','Bengaluru','97666 67676',5000,3,'new','Priya Sharma','Website — AI assessment','2026-11-21'],
+['Aman Singh','Noida','76543 33333',3200,2,'new','Karan Malhotra','Facebook','2026-11-21'],
+['Sneha Kulkarni','Nagpur','98222 30303',3900,3,'new','Priya Sharma','Website form','2026-11-21'],
+['Rahul Sharma','Pune','98765 11111',4500,3,'qualified','Priya Sharma','Website — AI assessment','2026-11-20'],
+['Sourav Das','Kolkata','98888 90909',5500,4,'new','Priya Sharma','Google Ads','2026-11-20'],
+['Priya Verma','New Delhi','87654 22222',8500,5,'survey_scheduled','Priya Sharma','Referral','2026-11-19'],
+['Imran Qureshi','Hyderabad','97555 56565',14500,10,'contacted','Karan Malhotra','Google Ads','2026-11-19'],
+['Anjali Gupta','Jaipur','21098 88888',9000,6,'new','Priya Sharma','Instagram','2026-11-18'],
+['Harpreet Gill','Chandigarh','98777 80808',9800,6,'survey_scheduled','Karan Malhotra','Website — AI assessment','2026-11-18'],
+['Arjun Kapoor','Gurugram','98111 20202',11000,7,'survey_scheduled','Karan Malhotra','Google Ads','2026-11-17'],
+['Kavita Deshmukh','Pune','90876 10000',5800,4,'contacted','Priya Sharma','Referral','2026-11-16'],
+['Deepika Reddy','Hyderabad','65432 44444',12000,8,'quotation_sent','Priya Sharma','Google Ads','2026-11-15'],
+['Rohan Mehta','Ahmedabad','10987 99999',15000,10,'qualified','Karan Malhotra','Website — AI assessment','2026-11-14'],
+['Farah Khan','Lucknow','98444 50505',4200,3,'qualified','Priya Sharma','Facebook','2026-11-13'],
+['Karthik Nair','Bengaluru','54321 55555',6800,4,'contacted','Karan Malhotra','Website form','2026-11-12'],
+['Vikas Patel','Surat','98333 40404',22000,15,'quotation_sent','Karan Malhotra','Channel partner','2026-11-11'],
+['Lakshmi Menon','Kochi','98666 70707',4800,3,'contacted','Priya Sharma','Instagram','2026-11-10'],
+['Ganesh Rao','Mysuru','97222 23232',7200,5,'qualified','Priya Sharma','Referral','2026-11-09'],
+['Pooja Bansal','Mumbai','97333 34343',18000,12,'quotation_sent','Karan Malhotra','Channel partner','2026-11-08'],
+['Sunil Joshi','Pune','32109 77777',7500,5,'lost','Karan Malhotra','Walk-in','2026-10-30'],
+['Manoj Tiwari','Indore','98555 60606',6100,4,'converted','Karan Malhotra','Referral','2026-10-28'],
+['Nisha Agarwal','Bhopal','97111 12121',3600,2,'lost','Karan Malhotra','Walk-in','2026-10-25'],
+['Meena Iyer','Chennai','43210 66666',5200,3,'converted','Priya Sharma','Referral','2026-10-20'],
+['Ravi Shankar','Coimbatore','97444 45454',6600,4,'converted','Priya Sharma','Website form','2026-10-18']
+].map((r,i)=>({id:'LD-'+(1063-i),name:r[0],city:r[1],phone:'+91 '+r[2],bill:r[3],kw:r[4],status:r[5],rep:r[6],source:r[7],date:r[8]}));
+
+let NOTIFS=[
+{t:'Survey approval pending',d:'Site survey for Priya Verma (New Delhi) needs engineer approval before design.',p:'warning',ic:'clip',ts:'2026-11-21T09:10:00+05:30',go:'surveys',read:false},
+{t:'Quotation awaiting customer response',d:'Q-2026-042 sent to Deepika Reddy — no response in 5 days. Follow-up suggested.',p:'info',ic:'file',ts:'2026-11-21T08:00:00+05:30',go:'quotations',read:false},
+{t:'Low stock detected',d:'Helios Pro 545 W panels are below the reorder level — 1 unit available.',p:'urgent',ic:'pkg',ts:'2026-11-20T18:30:00+05:30',go:'inventory',read:false},
+{t:'Installation scheduled tomorrow',d:'Rahul Sharma · 3 kW · Baner, Pune — Suresh Kumar’s team assigned.',p:'info',ic:'wrench',ts:'2026-11-20T16:00:00+05:30',go:'installations',read:true},
+{t:'Warranty claim received',d:'Inverter error E-023 (DC overvoltage) reported at Meena Iyer’s site, Chennai.',p:'urgent',ic:'shield',ts:'2026-11-20T14:30:00+05:30',go:'service',read:false}
+];
+let ACT=[
+['New customer registered','Divya Pillai submitted an AI rooftop enquiry from Bengaluru','users','2026-11-21T09:30:00+05:30'],
+['AI recommendation generated','5.45 kWp hybrid system recommended for Priya Verma','sun','2026-11-20T18:05:00+05:30'],
+['Survey submitted','Vikram Patel completed the site survey for Priya Verma','clip','2026-11-20T17:40:00+05:30'],
+['Payment received','₹1,25,000 advance from Rahul Sharma via bank transfer','wallet','2026-11-19T15:20:00+05:30'],
+['Quotation approved','Rahul Sharma approved Q-2026-041 for ₹2,45,110','file','2026-11-19T14:00:00+05:30'],
+['Installation completed','2 kW system commissioned for Aman Singh, Noida','checkc','2026-11-18T17:00:00+05:30']
+];
+const CHECK=[['Site preparation & safety',5],['Mounting structure installed',10],['Panels mounted & aligned',15],['DC string wiring',15],['Inverter installed',10],['AC wiring & ACDB',10],['Earthing & lightning arrester',15],['System testing (IR, Voc)',10],['Net-meter application',5],['Customer handover',5]];
+let INST=[
+{id:'INS-201',cust:'Rahul Sharma',city:'Pune',kw:3,tech:'Suresh Kumar',date:'2026-11-22',status:'in_progress',done:7},
+{id:'INS-202',cust:'Priya Verma',city:'New Delhi',kw:5,tech:'Ramesh Yadav',date:'2026-11-25',status:'in_progress',done:4},
+{id:'INS-198',cust:'Aman Singh',city:'Noida',kw:2,tech:'Suresh Kumar',date:'2026-11-14',status:'commissioned',done:10},
+{id:'INS-199',cust:'Meena Iyer',city:'Chennai',kw:3,tech:'Ajay Patil',date:'2026-11-16',status:'inspection',done:8},
+{id:'INS-203',cust:'Deepika Reddy',city:'Hyderabad',kw:8,tech:'Ajay Patil',date:'2026-11-28',status:'scheduled',done:1},
+{id:'INS-196',cust:'Manoj Tiwari',city:'Indore',kw:4,tech:'Dinesh Rathod',date:'2026-11-12',status:'delayed',done:3}
+].map(x=>({...x,checks:CHECK.map((_,i)=>i<x.done)}));
+const prog=x=>x.checks.reduce((s,c,i)=>s+(c?CHECK[i][1]:0),0);
+const REV={
+weekly:{labels:['W40','W41','W42','W43','W44','W45','W46','W47'],rev:[62000,48000,71000,55000,80000,74000,68000,98000],out:[6000,4000,9000,5000,12000,8000,10000,21000]},
+monthly:{labels:['Jun','Jul','Aug','Sep','Oct','Nov'],rev:[160000,190000,170000,210000,195000,320000],out:[10000,15000,20000,25000,40000,100000]},
+yearly:{labels:['FY 2022','FY 2023','FY 2024','FY 2025','FY 2026'],rev:[640000,910000,1380000,1820000,1245000],out:[20000,45000,80000,120000,210000]}
+};
+const PIPE=[['New leads',24,'#A8CE45','leads'],['Qualified',18,'#93BC55','leads'],['Survey',12,'#7EA75C','surveys'],['Design approval',8,'#6B925E','recommendations'],['Quotation',10,'#5E8456','quotations'],['Installation',8,'#55764D','installations'],['Completed',6,'#3B423A','installations']];
+const QUOTES=[
+['Q-2026-043','Rohan Mehta','Ahmedabad',10.9,618436,'2026-11-18','2026-12-18','draft'],
+['Q-2026-042','Deepika Reddy','Hyderabad',8.72,591580,'2026-11-10','2026-12-10','sent'],
+['Q-2026-041','Rahul Sharma','Pune',3.27,245110,'2026-11-05','2026-12-05','approved'],
+['Q-2026-040','Pooja Bansal','Mumbai',12,874200,'2026-11-08','2026-12-08','sent'],
+['Q-2026-039','Vikas Patel','Surat',15.26,1096500,'2026-11-11','2026-12-11','sent'],
+['Q-2026-038','Meena Iyer','Chennai',3.27,238900,'2026-10-14','2026-11-14','approved'],
+['Q-2026-036','Sunil Joshi','Pune',5.45,364000,'2026-10-12','2026-11-12','rejected']
+];
+const INV=[
+['SP-HEL-545','Helios Pro 545 W Mono PERC','SunPeak Energy',8,7,15800,'Pune Main','low_stock','Solar panels'],
+['SP-HEL-450','Helios 450 W Mono PERC','SunPeak Energy',64,18,13200,'Pune Main','in_stock','Solar panels'],
+['INV-VW-5S','SolarWave 5 kW 1φ On-grid','VoltWave Tech',14,3,48500,'Pune Main','in_stock','Inverters'],
+['INV-VW-10T','SolarWave 10 kW 3φ On-grid','VoltWave Tech',6,2,92000,'Mumbai Depot','in_stock','Inverters'],
+['INV-VW-5H','SolarWave 5 kW Hybrid','VoltWave Tech',4,2,78000,'Pune Main','low_stock','Inverters'],
+['INV-VW-36','SolarWave 3.6 kW 1φ On-grid','VoltWave Tech',0,0,41000,'Pune Main','out_of_stock','Inverters'],
+['BAT-TV-5K','TerraVault 5.12 kWh LFP','TerraVault',9,2,96000,'Mumbai Depot','in_stock','Batteries'],
+['MT-RT-3K','GI Elevated Mount — 3 kW kit','RoofTech',22,4,15000,'Pune Main','in_stock','Mounting structures'],
+['CB-SC-4DC','DC Solar Cable 4 mm² (100 m)','SolarCab',35,10,4500,'Pune Main','in_stock','Cables'],
+['PR-SG-KIT','ACDB + DCDB protection kit','SafeGrid',18,5,7800,'Pune Main','in_stock','Protection devices'],
+['AC-SG-EAR','Earthing & LA kit (3 pits)','SafeGrid',11,4,6500,'Mumbai Depot','in_stock','Accessories']
+];
+const TICKETS=[
+['SVC-2026-089','Meena Iyer','INV-VW-2026-00041','Inverter error E-023 — DC overvoltage at peak hours','high','Suresh Kumar','Under warranty','open'],
+['SVC-2026-088','Aman Singh','SP-HEL-2026-00211','6-month maintenance; slight drop in generation','medium','Suresh Kumar','Under warranty','in_progress'],
+['SVC-2026-087','Ravi Shankar','BAT-TV-2026-00019','Battery backup lasting less than expected','medium','Ajay Patil','Under warranty','open'],
+['SVC-2026-086','Manoj Tiwari','INV-VW-2026-00033','Wi-Fi monitoring dongle offline','low','Dinesh Rathod','Under warranty','resolved'],
+['SVC-2026-085','Vikas Kapoor','SP-HEL-2025-00987','Shade from new adjacent building (~30% loss)','low','Anita Desai','Not covered','closed']
+];
+let ROLE='admin';
+const ROLES={admin:['Rajesh Khanna','Director',null],sales:['Priya Sharma','Sales Executive',['dashboard','leads','customers','assessment','surveys','recommendations','quotations','assistant']],warehouse:['Arjun Mehta','Warehouse Operator',['dashboard','inventory','equipment','installations','assistant']]};
+const NAV=[
+['Overview',[['dashboard','Dashboard','dash']]],
+['Customer management',[['leads','Leads','userPlus'],['customers','Customers','users']]],
+['Solar assessment',[['assessment','AI Assessment','scan'],['surveys','Site Surveys','clip'],['recommendations','Solar Recommendations','sun']]],
+['Sales',[['quotations','Quotations','file'],['payments','Payments','wallet']]],
+['Operations',[['inventory','Inventory','pkg'],['equipment','Equipment','cpu'],['installations','Installations','wrench']]],
+['After sales',[['monitoring','Monitoring','act'],['service','Service & Warranty','shield']]],
+['Intelligence',[['assistant','AI Assistant','spark']]]
+];
+const LABEL={settings:'Settings',enquiry:'Customer enquiry'};NAV.forEach(g=>g[1].forEach(i=>LABEL[i[0]]=i[1]));
+const allowed=id=>id==='settings'||!ROLES[ROLE][2]||ROLES[ROLE][2].includes(id);
+
+/* ---------- utilities ---------- */
+function toast(msg,icon='checkc'){const t=document.createElement('div');t.className='toast';t.innerHTML=I(icon)+`<div>${msg}</div>`;document.getElementById('toasts').appendChild(t);setTimeout(()=>t.remove(),3200)}
+function csv(name,cols,rows){const q=v=>'"'+String(v).replace(/"/g,'""')+'"';const s='\uFEFF'+[cols.map(q).join(','),...rows.map(r=>r.map(q).join(','))].join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([s],{type:'text/csv'}));a.download=name+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);toast('Exported '+rows.length+' rows to '+name+'.csv','dl')}
+function closeAll(){document.querySelectorAll('.ov,.drawer,.scrim').forEach(e=>e.remove())}
+function modal(html,wide){closeAll();const o=document.createElement('div');o.className='ov';o.innerHTML=`<div class="modal${wide?' wide':''}" role="dialog">${html}</div>`;o.addEventListener('mousedown',e=>{if(e.target===o)o.remove()});document.body.appendChild(o);return o}
+function drawer(html){closeAll();const s=document.createElement('div');s.className='scrim';s.onclick=closeAll;const d=document.createElement('aside');d.className='drawer';d.innerHTML=html;document.body.append(s,d);return d}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeAll();closePops()}if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();const s=document.getElementById('gsearch');if(s)s.focus()}if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='b'){e.preventDefault();toggleSb()}});
+
+/* ---------- isometric hero illustration ---------- */
+function heroSVG(){
+ const CX=320,CY=178,P=(x,y,z)=>[CX+(x-y),CY+(x+y)/2-z];
+ const pts=a=>a.map(p=>p.map(n=>n.toFixed(1)).join(',')).join(' ');
+ const poly=(a,f,x='')=>`<polygon points="${pts(a)}" fill="${f}" ${x}/>`;
+ const box=(x,y,w,d,h,z0,c)=>poly([P(x,y+d,z0),P(x+w,y+d,z0),P(x+w,y+d,z0+h),P(x,y+d,z0+h)],c[1])+poly([P(x+w,y,z0),P(x+w,y+d,z0),P(x+w,y+d,z0+h),P(x+w,y,z0+h)],c[2])+poly([P(x,y,z0+h),P(x+w,y,z0+h),P(x+w,y+d,z0+h),P(x,y+d,z0+h)],c[0]);
+ const winY=(x1,x2,z1,z2,yp)=>poly([P(x1,yp,z1),P(x2,yp,z1),P(x2,yp,z2),P(x1,yp,z2)],'#A7B8AA');
+ const winX=(y1,y2,z1,z2,xp)=>poly([P(xp,y1,z1),P(xp,y2,z1),P(xp,y2,z2),P(xp,y1,z2)],'#93A697');
+ const panel=(x,y,w,d,z)=>{const a=[P(x,y,z+5),P(x+w,y,z+5),P(x+w,y+d,z+1),P(x,y+d,z+1)];return poly([P(x,y+d,z),P(x+w,y+d,z),P(x+w,y+d,z+1),P(x,y+d,z+1)],'#1F2830')+poly(a,'url(#pg)')+`<line x1="${P(x+w/2,y,z+5)[0]}" y1="${P(x+w/2,y,z+5)[1]}" x2="${P(x+w/2,y+d,z+1)[0]}" y2="${P(x+w/2,y+d,z+1)[1]}" stroke="#6E8297" stroke-width=".6" opacity=".55"/><line x1="${P(x,y+d/2,z+3)[0]}" y1="${P(x,y+d/2,z+3)[1]}" x2="${P(x+w,y+d/2,z+3)[0]}" y2="${P(x+w,y+d/2,z+3)[1]}" stroke="#6E8297" stroke-width=".6" opacity=".55"/>`+`<polyline points="${pts([P(x,y+d,z+1),P(x,y,z+5),P(x+w,y,z+5)])}" fill="none" stroke="#8FA3B6" stroke-width=".7" opacity=".8"/>`};
+ const array=(x,y,cols,rows,z,w=15,d=11,g=3)=>{let s='';for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)s+=panel(x+c*(w+g),y+r*(d+5),w,d,z);return s};
+ const tree=(x,y,r,h=14)=>{const b=P(x,y,0);return `<ellipse cx="${b[0]+4}" cy="${b[1]+1}" rx="${r*1.05}" ry="${r*.45}" fill="#292C29" opacity=".12"/><rect x="${b[0]-2}" y="${b[1]-h}" width="4" height="${h}" rx="1.5" fill="#B98C62"/><circle cx="${b[0]}" cy="${b[1]-h-r*.7}" r="${r}" fill="#5E8155"/><circle cx="${b[0]-r*.28}" cy="${b[1]-h-r*.95}" r="${r*.68}" fill="#7A9E6C"/><circle cx="${b[0]-r*.42}" cy="${b[1]-h-r*1.15}" r="${r*.3}" fill="#94B784"/>`};
+ const tank=(x,y,z)=>{const b=P(x,y,z);return `<rect x="${b[0]-7}" y="${b[1]-15}" width="14" height="15" fill="#3B423A"/><ellipse cx="${b[0]}" cy="${b[1]}" rx="7" ry="3.2" fill="#292C29"/><ellipse cx="${b[0]}" cy="${b[1]-15}" rx="7" ry="3.2" fill="#55605A"/>`};
+ const wall=['#F4F5F1','#E3E7DF','#CBD2C5'];
+ let s=`<svg viewBox="0 0 640 372" role="img" aria-label="Isometric renewable-energy landscape with rooftop solar homes"><defs><linearGradient id="gr" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#B5CBA6"/><stop offset="1" stop-color="#93B086"/></linearGradient><linearGradient id="pg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#435467"/><stop offset="1" stop-color="#2F3B47"/></linearGradient></defs>`;
+ s+=`<ellipse cx="320" cy="345" rx="250" ry="20" fill="#292C29" opacity=".07"/>`;
+ s+=box(-150,-150,300,300,24,-24,['url(#gr)','#C9B79C','#B19E83']);
+ s+=poly([P(-6,150,0),P(10,150,0),P(10,40,0),P(-6,40,0)],'#E6E1D3')+poly([P(10,40,0),P(10,24,0),P(-60,24,0),P(-60,40,0)],'#E6E1D3');
+ s+=tree(-128,-118,13)+tree(-86,-136,11)+tree(116,-60,11);
+ const t=P(105,-132,0);s+=`<rect x="${t[0]-2}" y="${t[1]-128}" width="4" height="128" fill="#E4E7E0"/><rect x="${t[0]}" y="${t[1]-128}" width="2" height="128" fill="#C9D0C3"/><g class="blades" style="transform-box:view-box;transform-origin:${t[0]}px ${t[1]-128}px"><path d="M${t[0]} ${t[1]-128} l-3 -46 l3 -2 l3 2z" fill="#FFFFFF"/><path d="M${t[0]} ${t[1]-128} l-3 -46 l3 -2 l3 2z" fill="#F1F2EF" transform="rotate(120 ${t[0]} ${t[1]-128})"/><path d="M${t[0]} ${t[1]-128} l-3 -46 l3 -2 l3 2z" fill="#E4E7E0" transform="rotate(240 ${t[0]} ${t[1]-128})"/></g><circle cx="${t[0]}" cy="${t[1]-128}" r="4" fill="#55764D"/>`;
+ // house C (back right)
+ s+=box(28,-118,82,58,40,0,wall)+winY(38,62,14,28,-60)+winY(74,98,14,28,-60)+winX(-110,-90,14,28,110)+winX(-82,-66,14,28,110)+array(36,-110,4,2,40);
+ // house A (left, two storey)
+ s+=box(-122,-62,92,82,76,0,wall)+poly([P(-122,-62,76),P(-30,-62,76),P(-30,20,76),P(-122,20,76)],'#E9ECE4')+poly([P(-117,-57,77),P(-35,-57,77),P(-35,15,77),P(-117,15,77)],'#F4F5F1');
+ s+=winY(-112,-92,46,64,20)+winY(-82,-62,46,64,20)+winY(-112,-92,14,32,20)+poly([P(-76,20,0),P(-58,20,0),P(-58,20,28),P(-76,20,28)],'#8C7A62')+winX(-52,-30,46,64,-30)+winX(-20,4,46,64,-30)+winX(-52,-30,14,32,-30);
+ s+=array(-112,-52,4,3,77)+tank(-44,-54,77);
+ // battery & inverter cabinet
+ s+=box(124,-22,18,14,30,0,['#FFFFFF','#E4E7E0','#CBD2C5'])+poly([P(128,-8,18),P(136,-8,18),P(136,-8,22),P(128,-8,22)],'#A8CE45');
+ // ground mounted array
+ s+=array(-128,64,4,2,9,15,11,4);for(let c=0;c<4;c++){const a=P(-128+c*19+7,64+27,0);s+=`<line x1="${a[0]}" y1="${a[1]}" x2="${a[0]}" y2="${a[1]-9}" stroke="#858B84" stroke-width="1"/>`}
+ // house B (front right)
+ s+=box(22,8,94,94,54,0,wall)+poly([P(22,8,54),P(116,8,54),P(116,102,54),P(22,102,54)],'#E9ECE4')+poly([P(27,13,55),P(111,13,55),P(111,97,55),P(27,97,55)],'#F4F5F1');
+ s+=winY(34,60,18,36,102)+winY(70,96,18,36,102)+poly([P(100,102,0),P(112,102,0),P(112,102,30),P(100,102,30)],'#8C7A62')+winX(20,46,18,36,116)+winX(58,84,18,36,116);
+ s+=array(32,18,5,3,55)+tank(104,24,55);
+ s+=tree(-40,118,12)+tree(140,88,14)+tree(-142,22,10)+tree(66,132,9,10);
+ // energy flow
+ const e1=P(70,50,58),e2=P(130,-14,24),e3=P(-70,-10,80);
+ s+=`<path d="M${e1[0]} ${e1[1]} Q ${e1[0]+40} ${e1[1]-50} ${e2[0]} ${e2[1]}" fill="none" stroke="#A8CE45" stroke-width="2" stroke-dasharray="4 6" class="flow"/><path d="M${e3[0]} ${e3[1]} Q ${(e3[0]+e2[0])/2} ${e3[1]-70} ${e2[0]} ${e2[1]-4}" fill="none" stroke="#A8CE45" stroke-width="2" stroke-dasharray="4 6" class="flow"/>`;
+ s+=`<circle cx="${P(-20,-150,0)[0]+200}" cy="40" r="15" fill="#F2C14E" opacity=".9"/><circle cx="${P(-20,-150,0)[0]+200}" cy="40" r="25" fill="#F2C14E" opacity=".18"/>`;
+ return s+'</svg>';
+}
+const styleEl=document.createElement('style');styleEl.textContent='.blades{animation:spin 9s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.flow{animation:fl 1.6s linear infinite}@keyframes fl{to{stroke-dashoffset:-20}}';document.head.appendChild(styleEl);
+
+/* ---------- shell ---------- */
+let route='dashboard',sbOpen=false;
+try{sbOpen=localStorage.getItem('sos-sb')==='1'}catch(e){}
+function toggleSb(){if(innerWidth<768){document.getElementById('sb').classList.toggle('mob');return}sbOpen=!sbOpen;try{localStorage.setItem('sos-sb',sbOpen?'1':'0')}catch(e){}render()}
+function closePops(){document.querySelectorAll('.pop').forEach(p=>p.remove())}
+function go(r){route=r;closeAll();closePops();location.hash='/'+r;render();scrollTo(0,0)}
+addEventListener('hashchange',()=>{const r=location.hash.replace('#/','')||'dashboard';if(r!==route){route=r;render()}});
+function shell(content){
+ const u=ROLES[ROLE];
+ let nav='';NAV.forEach((g,gi)=>{const items=g[1].filter(i=>allowed(i[0]));if(!items.length)return;nav+=(gi?'<div class="sep"></div>':'')+`<div class="grp">${g[0]}</div>`+items.map(i=>`<button class="nv${route===i[0]?' act':''}" data-go="${i[0]}" data-tip="${i[1]}" aria-label="${i[1]}">${I(i[2])}<span>${i[1]}</span></button>`).join('')});
+ const unread=NOTIFS.filter(n=>!n.read).length;
+ return `<aside class="sb${sbOpen?' open':''}" id="sb"><div class="sb-top">${LOGO}<div class="brand">Solar<b>OS</b></div></div><nav class="nav">${nav}</nav>
+ <div class="sb-bot"><button class="nv${route==='settings'?' act':''}" data-go="settings" data-tip="Settings" aria-label="Settings">${I('gear')}<span>Settings</span></button>
+ <button class="nv" id="sbt" data-tip="${sbOpen?'Collapse sidebar':'Expand sidebar'}" aria-label="Toggle sidebar">${I(sbOpen?'chevL':'chev')}<span>${sbOpen?'Collapse':'Expand'}</span></button>
+ <div class="me" data-tip="${u[0]} · ${u[1]}"><div class="av">${ini(u[0])}</div><div class="who"><b>${u[0]}</b><small>${u[1]}</small></div></div>
+ <button class="nv" id="logout" data-tip="Log out" aria-label="Log out">${I('logout')}<span>Log out</span></button></div></aside>
+ <div class="main"><header class="top"><button class="ib mob-only" id="mm" aria-label="Open menu">${I('menu')}</button>
+ <div class="crumb">${I('home',15)} <span class="hide-sm">SolarOS /</span> <b>${LABEL[route]||'Dashboard'}</b></div>
+ <div class="search"><div class="box">${I('search',16)}<input id="gsearch" placeholder="Search customers, projects, leads, quotations…" autocomplete="off"/><span class="kbd">Ctrl K</span></div></div>
+ <span class="demo hide-sm" title="Running on built-in demonstration data">Demo data</span>
+ <a class="btn btn-o hide-sm" href="#/enquiry" data-go="enquiry">${I('plus')} New enquiry</a>
+ <div class="rel"><button class="ib" id="bell" aria-label="Notifications">${I('bell')}${unread?`<span class="cnt">${unread}</span>`:''}</button></div>
+ <div class="rel"><button class="av" id="avb" aria-label="Profile menu" style="border:0">${ini(u[0])}</button></div></header>
+ <main class="page" id="page">${content}</main></div>`;
+}
+function bindShell(){
+ document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();const r=b.dataset.go;if(!allowed(r)){toast('Your role cannot access '+LABEL[r],'alert');return}go(r)}));
+ const tip=document.getElementById('tip');
+ document.querySelectorAll('.sb [data-tip]').forEach(b=>{b.addEventListener('mouseenter',()=>{if(sbOpen||innerWidth<768)return;const r=b.getBoundingClientRect();tip.textContent=b.dataset.tip;tip.style.display='block';tip.style.left=(r.right+10)+'px';tip.style.top=(r.top+r.height/2-14)+'px'});b.addEventListener('mouseleave',()=>tip.style.display='none')});
+ const sbt=document.getElementById('sbt');if(sbt)sbt.onclick=()=>{tip.style.display='none';toggleSb()};
+ const mm=document.getElementById('mm');if(mm)mm.onclick=()=>toggleSb();
+ const lo=document.getElementById('logout');if(lo)lo.onclick=()=>{tip.style.display='none';login()};
+ const bell=document.getElementById('bell');if(bell)bell.onclick=e=>{e.stopPropagation();const had=document.querySelector('.pop.np');closePops();if(had)return;const p=document.createElement('div');p.className='pop np';p.innerHTML=`<h4>Notifications <button class="btn btn-g btn-sm" id="mar">Mark all as read</button></h4>`+notifList(NOTIFS,true);bell.parentElement.appendChild(p);bindNotifs(p);p.querySelector('#mar').onclick=()=>{NOTIFS.forEach(n=>n.read=true);toast('All notifications marked as read');render()}};
+ const avb=document.getElementById('avb');if(avb)avb.onclick=e=>{e.stopPropagation();const had=document.querySelector('.pop.up2');closePops();if(had)return;const p=document.createElement('div');p.className='pop up2';p.style.width='270px';const u=ROLES[ROLE];p.innerHTML=`<div style="padding:10px 12px"><b style="font-weight:500">${u[0]}</b><div class="cd">${u[1]} · ${u[0].split(' ')[0].toLowerCase()}@solaros.in</div></div><div class="lbl" style="padding:8px 12px 4px">Switch role (demo)</div>`+Object.entries(ROLES).map(([k,v])=>`<button class="ck${k===ROLE?' on':''}" data-role="${k}" style="width:100%"><span class="box2">${k===ROLE?I('check',13):''}</span>${v[1]}</button>`).join('')+`<div style="border-top:1px solid var(--border);margin-top:6px;padding-top:6px"><button class="ck" data-go2="settings" style="width:100%">${I('gear',16)} Profile & settings</button><button class="ck" id="lo2" style="width:100%">${I('logout',16)} Sign out</button></div>`;avb.parentElement.appendChild(p);p.querySelectorAll('[data-role]').forEach(b=>b.onclick=()=>{ROLE=b.dataset.role;closePops();if(!allowed(route))route='dashboard';toast('Switched to '+ROLES[ROLE][1]+' — navigation updated for this role');render()});p.querySelector('[data-go2]').onclick=()=>go('settings');p.querySelector('#lo2').onclick=()=>login()};
+ const gs=document.getElementById('gsearch');if(gs){gs.addEventListener('input',()=>searchPop(gs));gs.addEventListener('focus',()=>{if(gs.value)searchPop(gs)})}
+}
+document.addEventListener('click',e=>{if(!e.target.closest('.pop')&&!e.target.closest('#bell')&&!e.target.closest('#avb')&&!e.target.closest('.search'))closePops()});
+function searchPop(inp){closePops();const q=inp.value.trim().toLowerCase();if(!q)return;const res=[];
+ LEADS.filter(l=>(l.name+' '+l.city+' '+l.id).toLowerCase().includes(q)).slice(0,4).forEach(l=>res.push(['Lead',l.name,l.city+' · '+l.kw+' kW · '+(ST[l.status]||[l.status])[0],()=>{go('leads');leadDrawer(l)}]));
+ QUOTES.filter(r=>(r[0]+' '+r[1]).toLowerCase().includes(q)).slice(0,3).forEach(r=>res.push(['Quotation',r[0]+' · '+r[1],inr(r[4]),()=>{go('quotations');quotePreview(r)}]));
+ INST.filter(x=>(x.id+' '+x.cust).toLowerCase().includes(q)).slice(0,3).forEach(x=>res.push(['Project',x.cust+' — '+x.kw+' kW',x.id+' · '+(ST[x.status][0]),()=>{go('installations');instDrawer(x)}]));
+ const p=document.createElement('div');p.className='pop';p.style.left='0';p.style.width='100%';
+ p.innerHTML=res.length?res.map((r,i)=>`<div class="nl" data-i="${i}"><div class="tile">${I(r[0]==='Lead'?'userPlus':r[0]==='Quotation'?'file':'wrench',16)}</div><div><b>${esc(r[1])}</b><p>${r[0]} · ${esc(r[2])}</p></div></div>`).join(''):`<div style="padding:16px;color:var(--muted)">No results for “${esc(inp.value)}”</div>`;
+ inp.closest('.search').appendChild(p);p.querySelectorAll('[data-i]').forEach(el=>el.onclick=()=>{res[+el.dataset.i][3]();inp.value=''})}
+function notifList(list,full){return list.map((n,i)=>`<div class="nl" data-n="${i}"><div class="tile t-${n.p}">${I(n.ic,17)}</div><div style="flex:1;min-width:0"><b>${n.t}</b><p>${n.d}</p><div class="meta"><span class="badge ${n.p==='urgent'?'b-danger':n.p==='warning'?'b-warning':'b-sage'}">${n.p==='urgent'?'High priority':n.p==='warning'?'Medium':'Info'}</span>${ago(n.ts)}</div></div>${!n.read?'<span class="unread"></span>':''}</div>`).join('')}
+function bindNotifs(root){root.querySelectorAll('[data-n]').forEach(el=>el.onclick=()=>{const n=NOTIFS[+el.dataset.n];n.read=true;if(allowed(n.go))go(n.go);else{toast('Your role cannot open '+LABEL[n.go],'alert');render()}})}
+
+/* ---------- views ---------- */
+const V={};
+V.dashboard=()=>{
+ const pipeMax=Math.max(...PIPE.map(p=>p[1]));
+ return `<section class="hero"><div><span class="bc">${I('dash',14)} Dashboard</span><h1>Solar operations management</h1><p class="sub">Monitor projects, customers, installations and business performance.</p>
+ <div class="hw"><div class="wg"><div class="lbl">Project completion</div><div style="display:flex;align-items:center;gap:14px;margin-top:10px"><svg width="76" height="76" viewBox="0 0 76 76"><circle cx="38" cy="38" r="31" fill="none" stroke="#E3E8E0" stroke-width="8"/><circle cx="38" cy="38" r="31" fill="none" stroke="#55764D" stroke-width="8" stroke-linecap="round" stroke-dasharray="${(2*Math.PI*31*.79).toFixed(1)} 999" transform="rotate(-90 38 38)"/><circle cx="38" cy="38" r="31" fill="none" stroke="#A8CE45" stroke-width="8" stroke-linecap="round" stroke-dasharray="2 999" stroke-dashoffset="${(-2*Math.PI*31*.79+2).toFixed(1)}" transform="rotate(-90 38 38)"/><text x="38" y="43" text-anchor="middle" font-size="16" font-weight="600" fill="#252925">79%</text></svg><div><div style="font-weight:500">68 of 86</div><div class="cd">projects past design<br/>approval</div></div></div></div>
+ <div class="wg"><div class="lbl">Installation pipeline</div><div style="display:flex;align-items:baseline;gap:8px;margin-top:8px"><span class="stat">12</span><span class="cd">active projects</span></div><div class="mb">${[['Scheduled',4],['In progress',5],['Inspection',2],['Handover',1]].map(([l,v])=>`<div><span>${l}</span><span class="bar"><i style="width:${v/5*100}%;background:${v===5?'#55764D':'#829B83'}"></i></span><span class="num">${v}</span></div>`).join('')}</div></div></div></div>
+ <div class="illu">${heroSVG()}<div class="kpis"><div class="kpi"><div class="tile">${I('zap',16)}</div><div><div class="cd">Active projects</div><b class="num" style="font-size:18px;font-weight:600">12</b></div></div><div class="kpi"><div class="tile" style="background:var(--lime-soft);color:#5A7613">${I('checkc',16)}</div><div><div class="cd">Completed installations</div><b class="num" style="font-size:18px;font-weight:600">68</b></div></div></div></div></section>
+ <div class="grid">
+ <section class="card c8"><div class="ch"><div class="tile">${I('trend',16)}</div><div class="grow"><div class="ct">Business overview</div><div class="cd">Financial year to date · Nov 2026</div></div><span class="demo">Demo data</span></div>
+  <div class="grid" style="gap:14px">${[['Total revenue',1245000,'+12.4%','up','vs last month',[60,72,66,80,74,100]],['Monthly revenue',320000,'+64.1%','up','vs October',[50,59,53,66,61,100]],['Outstanding payments',210000,'+8.5%','down','3 invoices overdue',[20,30,35,40,62,100]],['Total projects',86,'+9','up','new this month',[60,66,70,74,80,100]]].map(([l,v,d,c,h,sp])=>`<div class="c3" style="background:#F7F8F5;border-radius:14px;padding:14px;min-width:0"><div class="lbl">${l}</div><div class="stat" style="margin:8px 0 6px">${typeof v==='number'&&v>1000?lakh(v):v}</div><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span class="chip ${c}">${d}</span><span class="cd">${h}</span></div><svg viewBox="0 0 100 26" style="width:100%;height:26px;margin-top:8px" preserveAspectRatio="none"><polyline points="${sp.map((y,i)=>i*20+','+(24-y*.2)).join(' ')}" fill="none" stroke="${c==='down'?'#C96B61':'#55764D'}" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg></div>`).join('')}</div></section>
+ <section class="card c4"><div class="ch"><div class="tile">${I('act',16)}</div><div class="grow"><div class="ct">Operational metrics</div><div class="cd">Warehouse, dispatch and service</div></div></div>
+  ${[['pkg','Equipment dispatched','148 / 162 units',91,'#55764D','inventory'],['cpu','Inventory availability','86% of SKUs in stock',86,'#A8CE45','inventory'],['shield','Service tickets','7 open · 2 critical',28,'#D9A441','service']].map(([ic,l,v,p,col,gg])=>`<div class="om" style="cursor:pointer" data-go="${gg}"><div class="tile">${I(ic,16)}</div><div style="flex:1;min-width:0"><div style="display:flex;justify-content:space-between;gap:8px"><b style="font-weight:500;font-size:13.5px">${l}</b><span class="num cd">${p}%</span></div><div class="cd" style="margin:2px 0 7px">${v}</div><div class="bar"><i style="width:${p}%;background:${col}"></i></div></div></div>`).join('')}</section>
+ <section class="card c8"><div class="ch"><div class="tile">${I('wallet',16)}</div><div class="grow"><div class="ct">Revenue analytics</div><div class="legend" style="margin-top:4px"><span><i style="background:#55764D"></i>Revenue</span><span><i style="background:#A8CE45"></i>Payments received</span><span><i style="background:#E6C77F"></i>Outstanding</span></div></div><div class="seg" id="rseg">${['weekly','monthly','yearly'].map(k=>`<button data-k="${k}" class="${k==='monthly'?'on':''}">${k[0].toUpperCase()+k.slice(1)}</button>`).join('')}</div></div><div class="chartwrap" id="rchart"></div></section>
+ <section class="card c4"><div class="ch"><div class="tile">${I('bell',16)}</div><div class="grow"><div class="ct">Notifications</div><div class="cd">${NOTIFS.filter(n=>!n.read).length} need attention</div></div></div><div id="dnot" style="margin:-6px -10px">${notifList(NOTIFS)}</div></section>
+ <section class="card c4"><div class="ch"><div class="tile">${I('sun',16)}</div><div class="grow"><div class="ct">Project pipeline</div><div class="cd">86 projects across 7 stages</div></div></div>${PIPE.map(p=>`<div class="pp" data-go="${p[3]}"><span>${p[0]}</span><span class="bar"><i style="width:${p[1]/pipeMax*100}%;background:${p[2]}"></i></span><b class="num r" style="font-weight:500">${p[1]}</b></div>`).join('')}</section>
+ <section class="card c8"><div class="ch"><div class="tile">${I('userPlus',16)}</div><div class="grow"><div class="ct">Recent leads</div><div class="cd">Latest enquiries across all channels</div></div><button class="btn btn-o btn-sm" data-go="leads">View all</button></div><div class="tw"><table class="tbl"><thead><tr><th>Customer</th><th>City</th><th>Est. capacity</th><th>Status</th><th>Created</th></tr></thead><tbody>${LEADS.slice(0,6).map(l=>`<tr class="click" data-lead="${l.id}"><td><div style="display:flex;gap:10px;align-items:center"><div class="av" style="width:30px;height:30px;font-size:11px">${ini(l.name)}</div><div><div style="font-weight:500">${l.name}</div><div class="cd">${l.source}</div></div></div></td><td>${l.city}</td><td class="num">${l.kw} kW</td><td>${badge(l.status)}</td><td class="cd">${dlong(l.date)}</td></tr>`).join('')}</tbody></table></div></section>
+ <section class="card c6"><div class="ch"><div class="tile">${I('wrench',16)}</div><div class="grow"><div class="ct">Installation progress</div><div class="cd">Active and recently completed sites</div></div><button class="btn btn-o btn-sm" data-go="installations">Open</button></div>${INST.slice(0,5).map(x=>{const p=prog(x);return `<div class="pr click" data-inst="${x.id}" style="cursor:pointer"><div class="row"><div><b style="font-weight:500">${x.cust}</b> <span class="cd">— ${x.kw} kW · ${x.city}</span></div><div style="display:flex;gap:10px;align-items:center"><span class="num" style="font-weight:500">${p}%</span>${badge(x.status)}</div></div><div class="bar"><i style="width:${p}%;background:${p===100?'#5B9B64':x.status==='delayed'?'#C96B61':'#55764D'}"></i></div></div>`}).join('')}</section>
+ <section class="card c6"><div class="ch"><div class="tile">${I('act',16)}</div><div class="grow"><div class="ct">Business activity</div><div class="cd">What happened across SolarOS</div></div></div><div class="tl">${ACT.map(a=>`<div class="it"><div class="tile">${I(a[2],15)}</div><div><b>${a[0]}</b><p>${a[1]}</p><div class="cd" style="font-size:11.5px;margin-top:2px">${ago(a[3])}</div></div></div>`).join('')}</div></section>
+ </div>`;
+};
+function drawRevenue(k){
+ const el=document.getElementById('rchart');if(!el)return;const d=REV[k];const W=Math.max(el.clientWidth,300),H=250,pl=50,pr=12,pt=14,pb=28;const n=d.labels.length;
+ const paid=d.rev.map((v,i)=>v-d.out[i]);const max=Math.max(...d.rev)*1.12;const step=max>1e6?5e5:max>3e5?1e5:max>1e5?5e4:2e4;const top=Math.ceil(max/step)*step;
+ const x=i=>pl+(n===1?0:i*(W-pl-pr)/(n-1)),y=v=>pt+(H-pt-pb)*(1-v/top);
+ let g='';for(let v=0;v<=top+1;v+=step){g+=`<line x1="${pl}" x2="${W-pr}" y1="${y(v)}" y2="${y(v)}" stroke="#ECEEE9"/><text x="${pl-8}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="#858B84">${v>=1e5?'₹'+trim((v/1e5).toFixed(1))+'L':v?'₹'+v/1000+'k':'₹0'}</text>`}
+ const bw=Math.min(26,(W-pl-pr)/n*.34);d.out.forEach((v,i)=>{g+=`<rect x="${x(i)-bw/2}" y="${y(v)}" width="${bw}" height="${y(0)-y(v)}" rx="4" fill="#E6C77F" opacity=".75"/>`});
+ const line=a=>a.map((v,i)=>(i?'L':'M')+x(i).toFixed(1)+' '+y(v).toFixed(1)).join(' ');
+ g+=`<path d="${line(d.rev)} L${x(n-1)} ${y(0)} L${x(0)} ${y(0)} Z" fill="url(#ra)"/><path d="${line(d.rev)}" fill="none" stroke="#55764D" stroke-width="2.2"/><path d="${line(paid)}" fill="none" stroke="#A8CE45" stroke-width="2.2" stroke-dasharray="1 0"/>`;
+ d.labels.forEach((l,i)=>g+=`<text x="${x(i)}" y="${H-8}" text-anchor="middle" font-size="11" fill="#858B84">${l}</text>`);
+ el.innerHTML=`<svg width="100%" height="${H}" viewBox="0 0 ${W} ${H}"><defs><linearGradient id="ra" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#55764D" stop-opacity=".22"/><stop offset="1" stop-color="#55764D" stop-opacity="0"/></linearGradient></defs>${g}<line id="gl" y1="${pt}" y2="${y(0)}" stroke="#829B83" stroke-dasharray="3 3" style="display:none"/><circle id="gd1" r="4.5" fill="#fff" stroke="#55764D" stroke-width="2" style="display:none"/><circle id="gd2" r="4.5" fill="#fff" stroke="#A8CE45" stroke-width="2" style="display:none"/><rect id="hov" x="${pl}" y="0" width="${W-pl-pr}" height="${H}" fill="transparent"/></svg><div class="ttip" id="tt"></div>`;
+ const hov=el.querySelector('#hov'),tt=el.querySelector('#tt'),gl=el.querySelector('#gl'),g1=el.querySelector('#gd1'),g2=el.querySelector('#gd2');
+ hov.addEventListener('mousemove',e=>{const r=el.getBoundingClientRect();const mx=(e.clientX-r.left)*(W/r.width);let i=Math.round((mx-pl)/((W-pl-pr)/(n-1)));i=Math.max(0,Math.min(n-1,i));gl.setAttribute('x1',x(i));gl.setAttribute('x2',x(i));gl.style.display='';[g1,g2].forEach((c,j)=>{c.setAttribute('cx',x(i));c.setAttribute('cy',y(j?paid[i]:d.rev[i]));c.style.display=''});tt.innerHTML=`<b style="font-weight:600">${d.labels[i]}</b><div><span class="muted">Revenue</span><span class="num">${inr(d.rev[i])}</span></div><div><span class="muted">Payments received</span><span class="num">${inr(paid[i])}</span></div><div><span class="muted">Outstanding</span><span class="num">${inr(d.out[i])}</span></div>`;tt.style.display='block';const px=x(i)*r.width/W;tt.style.left=Math.min(px+12,r.width-190)+'px';tt.style.top='10px'});
+ hov.addEventListener('mouseleave',()=>{tt.style.display='none';gl.style.display='none';g1.style.display='none';g2.style.display='none'});
+}
+
+/* ---------- leads ---------- */
+let LQ={q:'',st:'all',pg:0};
+V.leads=()=>{const c=s=>LEADS.filter(l=>l.status===s).length;
+ return `<div class="ph"><div><h1>Leads</h1><p>Every enquiry from website, AI assessment, referrals and partners.</p></div><div class="acts"><span class="demo">Demo data</span><button class="btn btn-o" id="lcsv">${I('dl')} Export CSV</button><button class="btn btn-p" id="addl">${I('plus')} Add lead</button></div></div>
+ <div class="grid" style="margin-bottom:18px">${[['Total leads',LEADS.length,'userPlus'],['New leads',c('new'),'spark'],['Qualified',c('qualified'),'checkc'],['Converted',c('converted'),'trend']].map(([l,v,ic])=>`<div class="card c3"><div style="display:flex;justify-content:space-between"><div class="lbl">${l}</div><div class="tile">${I(ic,16)}</div></div><div class="stat" style="margin-top:6px">${v}</div></div>`).join('')}</div>
+ <section class="card"><div class="tool"><div style="position:relative;flex:1;min-width:220px;max-width:360px"><input class="inp" id="lq" placeholder="Search name, city, phone, ID…" value="${esc(LQ.q)}" style="padding-left:36px"/><span style="position:absolute;left:12px;top:11px;color:var(--muted)">${I('search',16)}</span></div><select class="inp" id="lst" style="width:auto">${['all','new','contacted','qualified','survey_scheduled','quotation_sent','converted','lost'].map(s=>`<option value="${s}" ${LQ.st===s?'selected':''}>${s==='all'?'All statuses':ST[s][0]}</option>`).join('')}</select></div><div id="ltable"></div></section>`};
+function leadsTable(){const el=document.getElementById('ltable');if(!el)return;const q=LQ.q.toLowerCase();const rows=LEADS.filter(l=>(LQ.st==='all'||l.status===LQ.st)&&(l.name+' '+l.city+' '+l.phone+' '+l.id+' '+l.rep).toLowerCase().includes(q));const per=8,pages=Math.max(1,Math.ceil(rows.length/per));LQ.pg=Math.min(LQ.pg,pages-1);const pr=rows.slice(LQ.pg*per,LQ.pg*per+per);
+ el.innerHTML=rows.length?`<div class="tw"><table class="tbl"><thead><tr><th>Lead ID</th><th>Customer</th><th>Location</th><th>Phone</th><th class="r">Monthly bill</th><th class="r">Est. capacity</th><th>Status</th><th>Salesperson</th><th>Created</th></tr></thead><tbody>${pr.map(l=>`<tr class="click" data-lead="${l.id}"><td class="mono">${l.id}</td><td style="font-weight:500">${l.name}</td><td>${l.city}</td><td class="num">${l.phone}</td><td class="r num">${inr(l.bill)}</td><td class="r num">${l.kw} kW</td><td>${badge(l.status)}</td><td>${l.rep}</td><td class="cd">${dlong(l.date)}</td></tr>`).join('')}</tbody></table></div><div class="pager"><span>Showing ${LQ.pg*per+1}–${LQ.pg*per+pr.length} of ${rows.length}</span><div class="acts"><button class="btn btn-o btn-sm" id="lprev" ${LQ.pg?'':'disabled style="opacity:.45"'}>Previous</button><button class="btn btn-o btn-sm" id="lnext" ${LQ.pg<pages-1?'':'disabled style="opacity:.45"'}>Next</button></div></div>`:`<div style="text-align:center;padding:40px;color:var(--muted)">${I('search',28)}<p style="margin-top:8px">No leads match your filters.</p></div>`;
+ el.querySelectorAll('[data-lead]').forEach(r=>r.onclick=()=>leadDrawer(LEADS.find(l=>l.id===r.dataset.lead)));
+ const p=el.querySelector('#lprev'),n=el.querySelector('#lnext');if(p)p.onclick=()=>{if(LQ.pg){LQ.pg--;leadsTable()}};if(n)n.onclick=()=>{LQ.pg++;leadsTable()}}
+function leadDrawer(l){const d=drawer(`<div class="mh"><div><div class="lbl">${l.id}</div><h3 style="margin-top:4px">${l.name}</h3><div style="margin-top:6px">${badge(l.status)}</div></div><button class="ib" data-x aria-label="Close">${I('x')}</button></div>
+ <div class="dl"><div><div class="lbl">Phone</div>${l.phone}</div><div><div class="lbl">City</div>${l.city}</div><div><div class="lbl">Monthly bill</div>${inr(l.bill)}</div><div><div class="lbl">Est. capacity</div>${l.kw} kW</div><div><div class="lbl">Source</div>${l.source}</div><div><div class="lbl">Salesperson</div>${l.rep}</div></div>
+ <div class="field"><label>Update status</label><select class="inp" id="dst">${Object.keys(ST).slice(0,7).map(s=>`<option value="${s}" ${l.status===s?'selected':''}>${ST[s][0]}</option>`).join('')}</select></div>
+ <div class="lbl" style="margin:16px 0 8px">Project journey</div>${['Enquiry','AI requirement collection','Rooftop analysis','Recommendation','Site verification','Quotation','Payment','Installation'].map((s,i)=>{const lvl={new:1,contacted:2,qualified:3,survey_scheduled:4,quotation_sent:6,converted:8,lost:1}[l.status];return `<div class="ck${i<lvl?' on':''}" style="cursor:default"><span class="box2">${i<lvl?I('check',13):''}</span>${s}</div>`}).join('')}
+ <div class="acts" style="margin-top:18px"><button class="btn btn-o" id="dsv">${I('cal')} Schedule survey</button><button class="btn btn-p" id="dcv">${I('trend')} Convert to project</button><button class="btn btn-d" id="dls">Mark lost</button></div>`);
+ const set=(s,m)=>{l.status=s;ACT.unshift([m,l.name+' · '+l.city,'userPlus',new Date().toISOString()]);toast(m+' — '+l.name);closeAll();render()};
+ d.querySelector('[data-x]').onclick=closeAll;d.querySelector('#dst').onchange=e=>set(e.target.value,'Status updated to '+ST[e.target.value][0]);
+ d.querySelector('#dsv').onclick=()=>set('survey_scheduled','Site survey scheduled');d.querySelector('#dcv').onclick=()=>set('converted','Lead converted to project');d.querySelector('#dls').onclick=()=>set('lost','Lead marked as lost')}
+function addLead(){const o=modal(`<div class="mh"><div><h3>Add lead</h3><div class="cd">Capture a new enquiry. Required fields are marked *.</div></div><button class="ib" data-x aria-label="Close">${I('x')}</button></div>
+ <form id="lf" novalidate><div class="field"><label>Full name *</label><input class="inp" name="name" placeholder="e.g. Rahul Sharma"/><div class="err"></div></div>
+ <div class="two"><div class="field"><label>Phone *</label><input class="inp" name="phone" placeholder="10-digit mobile number"/><div class="err"></div></div><div class="field"><label>City *</label><input class="inp" name="city" placeholder="e.g. Pune"/><div class="err"></div></div></div>
+ <div class="two"><div class="field"><label>Monthly bill (₹) *</label><input class="inp" name="bill" inputmode="numeric" placeholder="e.g. 4500"/><div class="err"></div></div><div class="field"><label>Source</label><select class="inp" name="source"><option>Walk-in</option><option>Referral</option><option>Website form</option><option>Google Ads</option><option>Channel partner</option></select></div></div>
+ <div class="acts" style="justify-content:flex-end;margin-top:8px"><button type="button" class="btn btn-o" data-x>Cancel</button><button class="btn btn-p">Add lead</button></div></form>`);
+ o.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>o.remove());
+ o.querySelector('#lf').onsubmit=e=>{e.preventDefault();const f=e.target,v=n=>f[n].value.trim();let ok=true;const er=(n,m)=>{f[n].parentElement.querySelector('.err').textContent=m;f[n].style.borderColor=m?'var(--danger)':'';if(m)ok=false};
+  er('name',v('name').length<3?'Enter the customer’s full name':'');er('phone',/^(\+91)?\s?\d{10}$/.test(v('phone').replace(/\s/g,''))?'':'Enter a valid 10-digit mobile number');er('city',v('city')?'':'City is required');er('bill',+v('bill')>0?'':'Enter the monthly bill in ₹');if(!ok)return;
+  const bill=+v('bill'),kw=Math.max(1,Math.round(bill/7.5*12/(365*5*.82)*2)/2);const id='LD-'+(1064+LEADS.length);
+  LEADS.unshift({id,name:v('name'),city:v('city'),phone:'+91 '+v('phone').replace(/\D/g,'').slice(-10).replace(/(\d{5})(\d{5})/,'$1 $2'),bill,kw,status:'new',rep:ROLES[ROLE][0],source:f.source.value,date:new Date().toISOString().slice(0,10)});
+  NOTIFS.unshift({t:'New lead added',d:v('name')+' · '+v('city')+' · est. '+kw+' kW',p:'info',ic:'userPlus',ts:new Date().toISOString(),go:'leads',read:false});ACT.unshift(['New lead added',v('name')+' from '+v('city'),'users',new Date().toISOString()]);
+  o.remove();toast('Lead '+id+' created for '+v('name'));render()}}
+
+/* ---------- AI assessment ---------- */
+let AS={img:null,state:'idle',layers:{roof:true,obs:true,shade:true,panels:true},review:null};
+const SAMPLE=`<svg class="photo" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice"><rect width="400" height="300" fill="#B9B3A6"/><rect x="34" y="28" width="332" height="240" fill="#D9D3C7"/><rect x="34" y="28" width="332" height="240" fill="none" stroke="#A39C8E" stroke-width="9"/>${Array.from({length:12},(_,i)=>`<line x1="${40+i*28}" y1="32" x2="${40+i*28}" y2="264" stroke="#CFC8BB" stroke-width="1"/>`).join('')}<rect x="270" y="40" width="80" height="70" fill="#C2BBAE"/><rect x="276" y="46" width="68" height="58" fill="#B0A99B"/><circle cx="96" cy="74" r="22" fill="#2F3530"/><circle cx="96" cy="74" r="15" fill="#3B423A"/><circle cx="182" cy="230" r="9" fill="#8C8F8A"/><rect x="186" y="226" width="20" height="3" fill="#6F726D"/><circle cx="20" cy="150" r="46" fill="#5E8155"/><circle cx="8" cy="120" r="34" fill="#6F9563"/><circle cx="26" cy="196" r="30" fill="#557A4C"/><path d="M34 112 Q 80 150 34 210 Z" fill="#292C29" opacity=".18"/></svg>`;
+const DET={roof:[[0.11,0.12],[0.89,0.12],[0.89,0.87],[0.11,0.87]],obs:[['Water tank',0.18,0.17,0.13,0.17,0.93],['Staircase room',0.66,0.12,0.22,0.27,0.88],['Dish antenna',0.43,0.72,0.09,0.09,0.71]],shade:[[0.08,0.36],[0.22,0.45],[0.22,0.66],[0.08,0.72]]};
+V.assessment=()=>`<div class="ph"><div><h1>AI rooftop assessment</h1><p>Upload rooftop photos to detect roof regions, obstacles and shading before the site visit.</p></div><div class="acts"><span class="demo">Demonstration result</span></div></div>
+ <div class="banner" style="margin-bottom:18px">${I('alert',18)}<div><b style="font-weight:500">AI rooftop assessment is preliminary.</b> Final installation suitability requires verified measurements, structural inspection and electrical assessment.</div></div>
+ <div class="grid"><section class="card c7"><div class="ch"><div class="tile">${I('scan',16)}</div><div class="grow"><div class="ct">Rooftop image</div><div class="cd">${AS.img==='sample'?'Sample terrace · Baner, Pune':AS.img?'Uploaded photo':'No image yet'}</div></div>${AS.img?`<button class="btn btn-o btn-sm" id="aclr">Replace image</button>`:''}</div>
+ ${AS.img?`<div class="stage" id="stage">${AS.img==='sample'?SAMPLE:`<img src="${AS.img}" alt="Uploaded rooftop"/>`}${AS.state==='done'?overlay():''}${AS.state==='run'?'<div style="position:absolute;inset:0;background:rgba(41,44,41,.35);display:grid;place-items:center"><div class="spin" style="width:34px;height:34px;border-width:3px;border-top-color:#A8CE45"></div></div>':''}</div>
+  ${AS.state==='done'?`<div class="lay">${[['roof','Roof regions'],['obs','Obstacles'],['shade','Shading'],['panels','Panel layout']].map(([k,l])=>`<label><input type="checkbox" data-ly="${k}" ${AS.layers[k]?'checked':''}/> ${l}</label>`).join('')}</div>`:''}
+  <div class="acts" style="margin-top:14px">${AS.state==='idle'?`<button class="btn btn-p" id="arun">${I('spark')} Analyze rooftop</button>`:''}${AS.state==='run'?`<div class="steps" id="asteps"></div>`:''}</div>`
+ :`<div class="drop" id="drop">${I('upload',28)}<p style="font-weight:500;margin-top:10px">Drag & drop rooftop photos or click to upload</p><p class="cd" style="margin-top:4px">Full rooftop · different angles · trees & water tanks · surrounding buildings (JPG/PNG, up to 10 MB)</p><input type="file" id="afile" accept="image/*" hidden/></div><div style="text-align:center;margin-top:14px"><button class="btn btn-o" id="asample">${I('home')} Use sample rooftop</button></div>`}
+ </section><section class="card c5"><div class="ch"><div class="tile">${I('clip',16)}</div><div class="grow"><div class="ct">Assessment report</div><div class="cd">SolarOS Roof Vision (demonstration)</div></div>${AS.state==='done'?'<span class="badge b-warning">Pending review</span>':''}</div>
+ ${AS.state!=='done'?`<div style="text-align:center;padding:36px 10px;color:var(--muted)">${I('scan',30)}<p style="margin-top:10px">Results appear here after analysis.</p></div>`:`
+  <div class="grid" style="gap:10px;margin-bottom:6px"><div class="c6" style="background:#F7F8F5;border-radius:12px;padding:12px"><div class="lbl">Usable roof share</div><div class="stat">68%</div><div class="cd">relative, uncalibrated</div></div><div class="c6" style="background:#F7F8F5;border-radius:12px;padding:12px"><div class="lbl">Est. shading loss</div><div class="stat">8%</div><div class="cd">west tree canopy</div></div></div>
+  <div class="lbl" style="margin:12px 0 4px">Detections</div>${DET.obs.map(o=>`<div class="conf"><span>${o[0]}</span><span class="bar"><i style="width:${o[5]*100}%;background:${o[5]>.8?'#55764D':'#D9A441'}"></i></span><span class="num cd">${Math.round(o[5]*100)}%</span></div>`).join('')}<div class="conf"><span>Afternoon shade from tree (west)</span><span class="bar"><i style="width:74%;background:#D9A441"></i></span><span class="num cd">74%</span></div>
+  <div class="lbl" style="margin:14px 0 6px">Potential layout</div><p style="font-size:13px">Approx. <b style="font-weight:600">12 modules</b> (≈ 6.5 kWp with 545 W panels) fit the clear area — <span class="muted">indicative until roof dimensions are verified.</span></p>
+  <div class="lbl" style="margin:14px 0 6px">Missing information</div><ul style="font-size:13px;padding-left:18px;color:#4E564D;display:grid;gap:3px"><li>Roof length and width (needed for exact usable area)</li><li>Roof tilt and orientation</li><li>Structural details — slab age and condition</li><li>Photo of the electricity meter / distribution board</li></ul>
+  <div class="lbl" style="margin:16px 0 6px">Human review</div>${AS.review?`<div class="banner" style="background:var(--success-soft);color:#2F5E37">${I('checkc',18)}<div>${AS.review}</div></div>`:`<textarea class="inp" id="anote" rows="2" placeholder="Reviewer notes (optional)"></textarea><div class="acts" style="margin-top:10px"><button class="btn btn-p" id="aok">${I('check')} Approve for site survey</button><button class="btn btn-o" id="ach">Request changes</button></div>`}`}
+ </section></div>`;
+function overlay(){const pts=a=>a.map(p=>p[0]*400+','+p[1]*300).join(' ');let s='<svg class="ovl" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice"><defs><pattern id="hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="8" height="8" fill="rgba(217,164,65,.18)"/><line x1="0" y1="0" x2="0" y2="8" stroke="#D9A441" stroke-width="2" opacity=".6"/></pattern></defs>';
+ if(AS.layers.roof)s+=`<polygon points="${pts(DET.roof)}" fill="rgba(168,206,69,.12)" stroke="#A8CE45" stroke-width="2.5" stroke-dasharray="7 4"/><text x="${DET.roof[0][0]*400+8}" y="${DET.roof[2][1]*300-8}" font-size="11" fill="#fff" font-weight="600" paint-order="stroke" stroke="#292C29" stroke-width="3">Roof section A · usable</text>`;
+ if(AS.layers.shade)s+=`<polygon points="${pts(DET.shade)}" fill="url(#hatch)" stroke="#D9A441" stroke-width="1.5"/>`;
+ if(AS.layers.panels){for(let r=0;r<3;r++)for(let c=0;c<4;c++){const x=0.33+c*0.075,y=0.43+r*0.13;s+=`<rect x="${x*400}" y="${y*300}" width="${0.068*400}" height="${0.115*300}" fill="rgba(47,59,71,.82)" stroke="#8FA3B6" stroke-width=".8"/>`}}
+ if(AS.layers.obs)DET.obs.forEach(o=>{s+=`<rect x="${o[1]*400}" y="${o[2]*300}" width="${o[3]*400}" height="${o[4]*300}" fill="rgba(201,107,97,.14)" stroke="#C96B61" stroke-width="2" rx="3"/><rect x="${o[1]*400}" y="${o[2]*300-15}" width="${o[0].length*6+34}" height="14" rx="3" fill="#C96B61"/><text x="${o[1]*400+4}" y="${o[2]*300-4}" font-size="10" fill="#fff" font-weight="600">${o[0]} ${Math.round(o[5]*100)}%</text>`});
+ return s+'</svg>'}
+function runAssessment(){AS.state='run';render();const steps=['Detecting roof boundaries','Identifying obstacles','Estimating shading','Planning panel layout'];let i=0;const tick=()=>{const el=document.getElementById('asteps');if(!el)return;el.innerHTML=steps.map((s,j)=>`<div class="${j<i?'done':''}">${j<i?`<span style="color:var(--forest)">${I('checkc',16)}</span>`:j===i?'<span class="spin"></span>':`<span style="width:16px;height:16px;border-radius:50%;border:1.5px solid #C9CFC6;display:inline-block"></span>`} ${s}</div>`).join('');if(i<steps.length){i++;setTimeout(tick,520)}else setTimeout(()=>{AS.state='done';render();toast('Rooftop analysed — 3 obstacles and 1 shading region detected','spark')},400)};tick()}
+function bindAssessment(){const f=document.getElementById('afile'),dr=document.getElementById('drop');
+ if(dr){dr.onclick=()=>f.click();dr.ondragover=e=>{e.preventDefault();dr.style.borderColor='var(--forest)'};dr.ondrop=e=>{e.preventDefault();load(e.dataTransfer.files[0])};f.onchange=()=>load(f.files[0])}
+ function load(file){if(!file)return;if(!file.type.startsWith('image/')){toast('Please upload an image file','alert');return}const r=new FileReader();r.onload=()=>{AS={...AS,img:r.result,state:'idle',review:null};render()};r.readAsDataURL(file)}
+ const sm=document.getElementById('asample');if(sm)sm.onclick=()=>{AS={...AS,img:'sample',state:'idle',review:null};render()};
+ const run=document.getElementById('arun');if(run)run.onclick=runAssessment;
+ const clr=document.getElementById('aclr');if(clr)clr.onclick=()=>{AS={...AS,img:null,state:'idle',review:null};render()};
+ document.querySelectorAll('[data-ly]').forEach(c=>c.onchange=()=>{AS.layers[c.dataset.ly]=c.checked;render()});
+ const ok=document.getElementById('aok');if(ok)ok.onclick=()=>{const n=(document.getElementById('anote')||{}).value;AS.review='Approved for site survey by '+ROLES[ROLE][0]+(n?' — “'+esc(n)+'”':'')+'. Surveyor will verify measurements on site.';toast('Assessment approved — survey can be scheduled');render()};
+ const ch=document.getElementById('ach');if(ch)ch.onclick=()=>{AS.review='Changes requested: please upload a photo of the west side and the meter board.';toast('Changes requested from customer','alert');render()}}
+
+/* ---------- quotations ---------- */
+function quotePreview(r){const kw=r[3];const items=[['Helios Pro 545 W Mono PERC modules','8541 43 00',Math.round(kw*1000/545),15800,5],['SolarWave '+(kw>6?'10 kW 3φ':'5 kW 1φ')+' on-grid inverter','8504 40 90',1,kw>6?92000:48500,5],['GI elevated mounting structure','7308 90 90',Math.ceil(kw/3),15000,18],['DC/AC cables, ACDB/DCDB, earthing & LA','8544 49 99',1,Math.round(kw*3800),18]];
+ let sub=0,gst=0;const rows=items.map(([n,h,q,p,g])=>{const t=q*p;sub+=t;gst+=t*g/100;return `<tr><td>${n}</td><td class="mono">${h}</td><td class="r num">${q}</td><td class="r num">${inr(p)}</td><td class="r num">${g}%</td><td class="r num">${inr(t)}</td></tr>`}).join('');
+ const inst=Math.round(kw*6000+8000),ig=inst*.18,tot=Math.round(sub+gst+inst+ig);
+ const o=modal(`<div class="mh"><div><div class="lbl">${r[0]}</div><h3 style="margin-top:4px">Quotation — ${r[1]}</h3><div style="margin-top:6px">${badge(r[7])}</div></div><div class="acts"><button class="btn btn-o btn-sm" id="qp">${I('print',15)} Print / PDF</button>${r[7]==='sent'||r[7]==='draft'?`<button class="btn btn-p btn-sm" id="qa">${I('check',15)} Mark approved</button>`:''}<button class="ib" data-x aria-label="Close">${I('x')}</button></div></div>
+ <div class="qdoc"><div style="display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap"><div style="display:flex;gap:10px;align-items:center">${LOGO}<div><b style="font-weight:600;font-size:15px">SolarOS Demo Installer Pvt. Ltd.</b><div class="cd">Baner, Pune, Maharashtra · GSTIN 27AABCS1234D1Z5 (demo)</div></div></div><div style="text-align:right"><div class="lbl">Quotation</div><b class="mono">${r[0]}</b><div class="cd">Date ${dlong(r[5])} · Valid till ${dlong(r[6])}</div></div></div>
+ <div style="margin-top:18px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap"><div><div class="lbl">Bill to</div><b style="font-weight:500">${r[1]}</b><div class="cd">${r[2]}</div></div><div style="text-align:right"><div class="lbl">System</div><b style="font-weight:500">${kw} kWp grid-connected rooftop</b><div class="cd">Est. generation ${Math.round(kw*1450).toLocaleString('en-IN')} kWh / year</div></div></div>
+ <div class="tw" style="margin:0"><table><thead><tr><th>Item</th><th>HSN</th><th class="r">Qty</th><th class="r">Rate</th><th class="r">GST</th><th class="r">Amount</th></tr></thead><tbody>${rows}<tr><td>Installation & commissioning</td><td class="mono">9954</td><td class="r">1</td><td class="r num">${inr(inst)}</td><td class="r">18%</td><td class="r num">${inr(inst)}</td></tr></tbody></table></div>
+ <div class="tot"><div><span class="muted">Taxable value</span><span class="num">${inr(sub+inst)}</span></div><div><span class="muted">CGST + SGST</span><span class="num">${inr(gst+ig)}</span></div><div class="g"><span>Grand total</span><span class="num">${inr(tot)}</span></div><div class="cd" style="text-align:right">PM Surya Ghar subsidy (indicative): ${inr(kw>=3?78000:kw*30000)} — subject to DISCOM approval</div></div>
+ <p class="cd" style="margin-top:14px">Terms: 40% advance on approval, 50% on material dispatch, 10% on commissioning. 25-year module performance warranty; 5-year system workmanship warranty.</p></div>`,true);
+ o.querySelector('[data-x]').onclick=()=>o.remove();o.querySelector('#qp').onclick=()=>window.print();const qa=o.querySelector('#qa');if(qa)qa.onclick=()=>{r[7]='approved';ACT.unshift(['Quotation approved',r[1]+' approved '+r[0]+' for '+inr(r[4]),'file',new Date().toISOString()]);o.remove();toast(r[0]+' approved — 40% advance invoice created and stock reserved');render()}}
+
+/* ---------- installations ---------- */
+function instDrawer(x){const d=drawer(`<div class="mh"><div><div class="lbl">${x.id}</div><h3 style="margin-top:4px">${x.cust} — ${x.kw} kW</h3><div class="cd" style="margin-top:2px">${x.city} · Lead technician ${x.tech} · ${dlong(x.date)}</div></div><button class="ib" data-x aria-label="Close">${I('x')}</button></div>
+ <div style="display:flex;justify-content:space-between;align-items:center;margin:6px 0 8px"><span>${badge(x.status)}</span><b class="num" id="ip" style="font-size:22px;font-weight:600">${prog(x)}%</b></div><div class="bar" style="height:10px"><i id="ib" style="width:${prog(x)}%"></i></div>
+ <div class="lbl" style="margin:18px 0 6px">Installation checklist</div><div id="ckl">${CHECK.map((c,i)=>`<div class="ck${x.checks[i]?' on':''}" data-c="${i}"><span class="box2">${x.checks[i]?I('check',13):''}</span><span>${c[0]}</span><span class="cd" style="margin-left:auto;text-decoration:none">${c[1]}%</span></div>`).join('')}</div>
+ <div class="acts" style="margin-top:16px"><button class="btn btn-p" id="ho" ${prog(x)<95?'disabled style="opacity:.5;cursor:not-allowed"':''}>${I('checkc')} Complete handover</button></div>`);
+ d.querySelector('[data-x]').onclick=closeAll;
+ d.querySelectorAll('[data-c]').forEach(el=>el.onclick=()=>{const i=+el.dataset.c;x.checks[i]=!x.checks[i];if(x.status==='scheduled'&&x.checks.some(Boolean))x.status='in_progress';instDrawer(x);render2()});
+ d.querySelector('#ho').onclick=()=>{x.checks=x.checks.map(()=>true);x.status='commissioned';ACT.unshift(['Installation completed',x.kw+' kW system commissioned for '+x.cust+', '+x.city,'checkc',new Date().toISOString()]);toast('Handover complete — warranty registered for '+x.cust);closeAll();render()}}
+function render2(){const keep=document.querySelector('.drawer');const html=keep&&keep.outerHTML;render();if(html){/* drawer re-rendered by caller */}}
+
+/* ---------- generic module pages ---------- */
+const MOD={
+ customers:{t:'Customers',d:'Converted customers, their projects and lifetime value.',s:[['Customers','10','users'],['Active projects','12','zap'],['Lifetime value',lakh(4685000),'wallet'],['Repeat / referrals','4','trend']],c:['Customer','City','Phone','Projects','Total value','Customer since'],r:[['Meena Iyer','Chennai','+91 43210 66666','1',inr(238900),'Oct 2026'],['Manoj Tiwari','Indore','+91 98555 60606','1',inr(312400),'Oct 2026'],['Ravi Shankar','Coimbatore','+91 97444 45454','1',inr(296000),'Oct 2026'],['Aman Singh','Noida','+91 76543 33333','1',inr(168500),'Sep 2026'],['Rahul Sharma','Pune','+91 98765 11111','1',inr(245110),'Nov 2026'],['Vikas Kapoor','Pune','+91 99887 76655','2',inr(612000),'Mar 2025']]},
+ surveys:{t:'Site surveys',d:'Physical verification of rooftops, structure and electrical readiness.',s:[['Scheduled','4','cal'],['Completed','21','checkc'],['Pending approval','2','clip'],['Rejected','1','alert']],c:['Survey','Customer','City','Surveyor','Scheduled','Roof','Status'],r:[['S-301','Priya Verma','New Delhi','Vikram Patel','15 Nov','RCC flat · 85 m²','submitted'],['S-302','Rahul Sharma','Pune','Vikram Patel','10 Nov','RCC flat · 55 m²','approved'],['S-304','Arjun Kapoor','Gurugram','Vikram Patel','21 Nov','RCC flat · 120 m²','in_progress'],['S-303','Karthik Nair','Bengaluru','Vikram Patel','25 Nov','Metal sheet · 70 m²','pending'],['S-305','Harpreet Gill','Chandigarh','Vikram Patel','26 Nov','RCC flat · 96 m²','pending'],['S-299','Sunil Joshi','Pune','Vikram Patel','28 Oct','Sloped tile · 40 m²','rejected']],st:6},
+ recommendations:{t:'Solar recommendations',d:'Engineering-rule sizing from consumption, verified roof area and catalog specifications.',s:[['Generated','14','sun'],['Approved designs','9','checkc'],['Avg. system size','6.2 kWp','zap'],['Avg. payback','4.4 yrs','trend']],c:['ID','Customer','System','Modules','Inverter','Generation / yr','Payback','Status'],r:[['REC-89','Rohan Mehta','10.9 kWp on-grid','20 × 545 W','SolarWave 10 kW 3φ','15,900 kWh','4.1 yrs','draft'],['REC-88','Priya Verma','5.45 kWp hybrid','10 × 545 W','SolarWave 5 kW Hybrid','7,950 kWh','4.6 yrs','draft'],['REC-87','Rahul Sharma','3.27 kWp on-grid','6 × 545 W','SolarWave 5 kW 1φ','4,770 kWh','3.9 yrs','approved'],['REC-86','Deepika Reddy','8.72 kWp on-grid','16 × 545 W','SolarWave 10 kW 3φ','12,700 kWh','4.3 yrs','approved']],st:7},
+ quotations:{t:'Quotations',d:'GST-compliant proposals with itemised bill of materials.',s:[['Total quotations','7','file'],['Draft','1','form'],['Sent','3','send'],['Approved','2','checkc']],c:['Quotation','Customer','City','System','Amount','Created','Valid till','Status'],rows:()=>QUOTES.map(q=>[q[0],q[1],q[2],q[3]+' kWp',inr(q[4]),dlong(q[5]),dlong(q[6]),q[7]]),st:7,click:'quote'},
+ payments:{t:'Payments',d:'Collections, advances and outstanding balances by project.',s:[['Total collected',lakh(1035000),'wallet'],['Pending',lakh(320110),'cal'],['Advance received',lakh(310000),'checkc'],['Outstanding',lakh(210000),'alert']],c:['Reference','Customer','Quotation','Amount','Method','Date','Status'],r:[['TXN-8841','Rahul Sharma','Q-2026-041',inr(125000),'Bank transfer','16 Nov','completed'],['TXN-8857','Rahul Sharma','Q-2026-041',inr(120110),'UPI','28 Nov','pending'],['TXN-7723','Meena Iyer','Q-2026-038',inr(185000),'Bank transfer','15 Nov','completed'],['TXN-7790','Meena Iyer','Q-2026-038',inr(53900),'Cheque','30 Nov','pending'],['TXN-7512','Manoj Tiwari','Q-2026-031',inr(146000),'Bank transfer','2 Nov','overdue'],['TXN-7408','Ravi Shankar','Q-2026-029',inr(296000),'UPI','24 Oct','completed']],st:6},
+ inventory:{t:'Inventory',d:'Stock across warehouses with reservations for confirmed projects.',s:[['Total products','11','pkg'],['Stock value',lakh(4812000),'wallet'],['Low stock','2','alert'],['Out of stock','1','x']],c:['SKU','Product','Category','Brand','Qty','Reserved','Available','Price','Warehouse','Status'],rows:()=>INV.map(r=>[r[0],r[1],r[8],r[2],r[3],r[4],Math.max(0,r[3]-r[4]),inr(r[5]),r[6],r[7]]),st:9},
+ equipment:{t:'Equipment',d:'Serial-number tracking from warehouse to rooftop, with warranty status.',s:[['Tracked units','162','cpu'],['Dispatched','148','send'],['Installed','131','checkc'],['Warranty expiring','3','alert']],c:['Serial number','Product','Supplier','Purchased','Warranty until','Project','Status'],r:[['SP-HEL-2026-00142','Helios Pro 545 W','SunPeak Energy','15 Jun 2026','Jun 2051','Rahul Sharma — 3 kW','installed'],['INV-VW-2026-00058','SolarWave 5 kW 1φ','VoltWave Tech','01 Jul 2026','Jul 2036','Rahul Sharma — 3 kW','dispatched'],['BAT-TV-2026-00023','TerraVault 5.12 kWh','TerraVault','10 Aug 2026','Aug 2036','—','in_warehouse'],['SP-HEL-2026-00178','Helios Pro 545 W','SunPeak Energy','01 Sep 2026','Sep 2051','Priya Verma — 5 kW','reserved'],['INV-VW-2026-00041','SolarWave 5 kW 1φ','VoltWave Tech','12 Mar 2026','Mar 2036','Meena Iyer — 3 kW','installed']],st:6},
+ installations:{t:'Installations',d:'Field execution, checklists, testing and customer handover.',s:[['Scheduled','4','cal'],['In progress','5','wrench'],['Completed','68','checkc'],['Delayed','1','alert']],c:['Project','Customer','City','System','Technician','Schedule','Progress','Status'],rows:()=>INST.map(x=>[x.id,x.cust,x.city,x.kw+' kW',x.tech,dlong(x.date),prog(x)+'%',x.status]),st:7,click:'inst'},
+ service:{t:'Service & warranty',d:'Maintenance, complaints and warranty claims after commissioning.',s:[['Open tickets','2','alert'],['In progress','1','wrench'],['Resolved','24','checkc'],['Warranty claims','3','shield']],c:['Ticket','Customer','Equipment serial','Issue','Priority','Technician','Warranty','Status'],rows:()=>TICKETS.map(t=>[t[0],t[1],t[2],t[3],t[4],t[5],t[6],t[7]]),st:7,click:'ticket'}
+};
+function modView(id){const m=MOD[id];const rows=m.rows?m.rows():m.r;
+ return `<div class="ph"><div><h1>${m.t}</h1><p>${m.d}</p></div><div class="acts"><span class="demo">Demo data</span><button class="btn btn-o" id="mcsv">${I('dl')} Export CSV</button></div></div>
+ <div class="grid" style="margin-bottom:18px">${m.s.map(([l,v,ic])=>`<div class="card c3"><div style="display:flex;justify-content:space-between"><div class="lbl">${l}</div><div class="tile">${I(ic,16)}</div></div><div class="stat" style="margin-top:6px">${v}</div></div>`).join('')}</div>
+ <section class="card"><div class="tool"><div style="position:relative;flex:1;min-width:220px;max-width:360px"><input class="inp" id="mq" placeholder="Search ${m.t.toLowerCase()}…" style="padding-left:36px"/><span style="position:absolute;left:12px;top:11px;color:var(--muted)">${I('search',16)}</span></div><span class="cd" id="mcount">${rows.length} records</span></div>
+ <div class="tw"><table class="tbl"><thead><tr>${m.c.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody id="mbody">${rows.map((r,ri)=>`<tr class="click" data-r="${ri}">${r.map((v,i)=>`<td${i===0?' class="mono"':''}>${m.st===i||(id==='service'&&i===4)?badge(v):esc(v)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></section>`}
+function bindMod(id){const m=MOD[id];const rows=m.rows?m.rows():m.r;
+ document.getElementById('mcsv').onclick=()=>csv('solaros-'+id,m.c,rows.map(r=>r.map(v=>ST[v]?ST[v][0]:v)));
+ document.getElementById('mq').oninput=e=>{const q=e.target.value.toLowerCase();let n=0;document.querySelectorAll('#mbody tr').forEach(tr=>{const show=tr.textContent.toLowerCase().includes(q);tr.style.display=show?'':'none';if(show)n++});document.getElementById('mcount').textContent=n+' records'};
+ document.querySelectorAll('#mbody tr').forEach(tr=>tr.onclick=()=>{const r=rows[+tr.dataset.r];if(m.click==='quote')return quotePreview(QUOTES[+tr.dataset.r]);if(m.click==='inst')return instDrawer(INST[+tr.dataset.r]);if(m.click==='ticket')return ticketDrawer(TICKETS[+tr.dataset.r]);
+  const d=drawer(`<div class="mh"><div><div class="lbl">${m.t}</div><h3 style="margin-top:4px">${esc(r[1]||r[0])}</h3></div><button class="ib" data-x aria-label="Close">${I('x')}</button></div><div class="dl">${m.c.map((c,i)=>`<div><div class="lbl">${c}</div>${m.st===i?badge(r[i]):esc(r[i])}</div>`).join('')}</div>`);d.querySelector('[data-x]').onclick=closeAll})}
+function ticketDrawer(t){const d=drawer(`<div class="mh"><div><div class="lbl">${t[0]}</div><h3 style="margin-top:4px">${t[1]}</h3><div style="margin-top:6px;display:flex;gap:6px">${badge(t[4])} ${badge(t[7])}</div></div><button class="ib" data-x aria-label="Close">${I('x')}</button></div>
+ <div class="dl"><div><div class="lbl">Equipment serial</div><span class="mono">${t[2]}</span></div><div><div class="lbl">Warranty</div>${t[6]}</div><div style="grid-column:1/-1"><div class="lbl">Issue</div>${t[3]}</div><div><div class="lbl">Technician</div>${t[5]}</div></div>
+ <div class="field"><label>Update status</label><select class="inp" id="tst">${['open','in_progress','resolved','closed'].map(s=>`<option value="${s}" ${t[7]===s?'selected':''}>${ST[s][0]}</option>`).join('')}</select></div><div class="field"><label>Resolution notes</label><textarea class="inp" id="tres" rows="3" placeholder="Describe the fix or next step"></textarea></div><button class="btn btn-p" id="tsave">${I('check')} Save update</button>`);
+ d.querySelector('[data-x]').onclick=closeAll;d.querySelector('#tsave').onclick=()=>{t[7]=d.querySelector('#tst').value;toast(t[0]+' updated to '+ST[t[7]][0]);closeAll();render()}}
+
+/* ---------- monitoring (honest: no fake live data) ---------- */
+V.monitoring=()=>`<div class="ph"><div><h1>Monitoring</h1><p>Live generation and inverter health appear here once telemetry is connected.</p></div><div class="acts"><span class="demo">Demo data</span></div></div>
+ <section class="card" style="text-align:center;padding:40px 20px;margin-bottom:18px"><div class="tile" style="width:56px;height:56px;margin:0 auto;border-radius:16px">${I('plug',26)}</div><h3 style="font-size:18px;font-weight:600;margin-top:14px">Telemetry not connected</h3><p class="muted" style="max-width:520px;margin:8px auto 16px">SolarOS shows energy generated, power output, inverter status and anomalies only from real inverter data. Connect an inverter cloud API or data logger to start monitoring — no simulated live values are displayed.</p><button class="btn btn-p" id="mconn">${I('plug')} How to connect telemetry</button></section>
+ <section class="card"><div class="ch"><div class="tile">${I('act',16)}</div><div class="grow"><div class="ct">Commissioned systems</div><div class="cd">Ready for monitoring once connected</div></div></div><div class="tw"><table class="tbl"><thead><tr><th>Installation</th><th>Customer</th><th>City</th><th>System</th><th>Commissioned</th><th>Telemetry</th></tr></thead><tbody>${[['INS-198','Aman Singh','Noida','2 kW','14 Nov 2026'],['INS-184','Meena Iyer','Chennai','3 kW','02 Oct 2026'],['INS-171','Ravi Shankar','Coimbatore','4 kW','21 Sep 2026'],['INS-160','Vikas Kapoor','Pune','6 kW','12 Mar 2025']].map(r=>`<tr>${r.map((v,i)=>`<td${i===0?' class="mono"':''}>${v}</td>`).join('')}<td>${badge('not_connected')}</td></tr>`).join('')}</tbody></table></div></section>`;
+
+/* ---------- AI assistant ---------- */
+let CHAT=[];
+const SUGG=['Which projects are delayed?','What stock needs replenishment?','Which quotations are pending?','What is our monthly revenue?','Which service tickets need attention?','Which installations are scheduled this week?'];
+const QA=[
+{k:/delay|late|behind|overdue project/i,m:'installations',fn:'get_delayed_projects',src:'Installations',a:()=>({t:'1 installation is behind schedule and 1 is at risk.',tbl:[['Project','Customer','Scheduled','Status','Reason'],[['INS-196','Manoj Tiwari · 4 kW','12 Nov','Delayed 9 days','Net-meter approval pending with DISCOM'],['INS-199','Meena Iyer · 3 kW','16 Nov','In inspection','Awaiting DISCOM inspection slot']]]})},
+{k:/stock|replenish|inventory|reorder|restock/i,m:'inventory',fn:'get_stock_to_replenish',src:'Inventory',a:()=>({t:'3 products are at or below their reorder level.',tbl:[['SKU','Product','Available','Reorder level','Suggested order'],[['SP-HEL-545','Helios Pro 545 W','1','20','40 units'],['INV-VW-5H','SolarWave 5 kW Hybrid','2','5','8 units'],['INV-VW-36','SolarWave 3.6 kW','0','5','10 units']]]})},
+{k:/quotation|quote|proposal/i,m:'quotations',fn:'get_pending_quotations',src:'Quotations',a:()=>{const p=QUOTES.filter(q=>q[7]==='sent'||q[7]==='draft');return {t:p.length+' quotations worth '+lakh(p.reduce((s,q)=>s+q[4],0))+' are awaiting a decision.',tbl:[['Quotation','Customer','Value','Status'],p.map(q=>[q[0],q[1],inr(q[4]),ST[q[7]][0]])]}}},
+{k:/revenue|sales|income|earn|collection/i,m:'payments',fn:'get_monthly_revenue',src:'Payments, Revenue',a:()=>({t:'November revenue is ₹3.2 lakh, up 64% on October.',met:[['November revenue','₹3.2 L','+64.1% vs Oct'],['Payments received','₹2.2 L','this month'],['Outstanding','₹2.1 L','3 invoices overdue'],['FY to date','₹12.45 L','Jun–Nov 2026']]})},
+{k:/ticket|service|warranty|complaint|attention/i,m:'service',fn:'get_service_attention',src:'Service tickets',a:()=>({t:'3 tickets need attention — 1 high-priority warranty claim.',tbl:[['Ticket','Customer','Issue','Priority'],TICKETS.filter(t=>t[7]==='open'||t[7]==='in_progress').map(t=>[t[0],t[1],t[3],ST[t[4]][0]])]})},
+{k:/install|this week|scheduled|schedule/i,m:'installations',fn:'get_installations_this_week',src:'Installations',a:()=>({t:'2 installations are scheduled this week (17–23 Nov).',tbl:[['Project','Customer','Date','Technician'],[['INS-201','Rahul Sharma · 3 kW','22 Nov','Suresh Kumar'],['INS-204','Kavita Deshmukh · 4 kW','23 Nov','Ramesh Yadav']]]})}
+];
+V.assistant=()=>`<div class="ph"><div><h1>SolarOS Intelligence</h1><p>Ask about projects, stock, sales and service. Answers come from authorized, read-only SolarOS functions that respect your role.</p></div><div class="acts"><span class="demo">Demo data</span>${CHAT.length?`<button class="btn btn-o" id="cnew">${I('plus')} New chat</button>`:''}</div></div>
+ <section class="card" style="padding:0;overflow:hidden"><div class="msgs" id="msgs">${CHAT.length?'':`<div style="text-align:center;padding:30px 10px"><div class="tile" style="width:52px;height:52px;margin:0 auto;border-radius:16px;background:var(--lime-soft);color:#5A7613">${I('spark',24)}</div><h3 style="font-weight:600;margin-top:12px">How can I help, ${ROLES[ROLE][0].split(' ')[0]}?</h3><p class="cd" style="margin-top:4px">Try one of these questions</p></div>`}${CHAT.join('')}</div>
+ <div class="qr">${SUGG.map(s=>`<button data-q="${esc(s)}">${s}</button>`).join('')}</div>
+ <form class="compose" id="cf"><input class="inp" id="ci" placeholder="Ask SolarOS Intelligence…" autocomplete="off"/><button class="btn btn-p">${I('send')} Ask</button></form></section>`;
+function ask(q){if(!q.trim())return;CHAT.push(`<div class="msg usr">${esc(q)}</div>`);CHAT.push('<div class="msg bot" id="typing"><span class="typing"><i></i><i></i><i></i></span></div>');render();
+ setTimeout(()=>{CHAT.pop();const h=QA.find(x=>x.k.test(q));let html;
+  if(!h)html=`<div class="ans"><p>I can answer questions about delayed projects, stock to replenish, pending quotations, monthly revenue, service tickets and this week’s installations.</p></div>`;
+  else if(!allowed(h.m))html=`<div class="ans"><div class="fn">${I('shield',13)} ${h.fn} · refused</div><p>Your role (${ROLES[ROLE][1]}) doesn’t have access to ${LABEL[h.m]} data, so I can’t answer that. Ask a Director to share the report.</p></div>`;
+  else{const a=h.a();html=`<div class="ans"><div class="fn">${I('zap',13)} Authorized function · ${h.fn} · read-only · Sources: ${h.src}</div><p style="font-weight:500">${a.t}</p>${a.tbl?`<div class="tw" style="margin:10px 0 0"><table class="tbl"><thead><tr>${a.tbl[0].map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>${a.tbl[1].map(r=>`<tr>${r.map(v=>`<td>${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`:''}${a.met?`<div class="mets">${a.met.map(m=>`<div><div class="lbl">${m[0]}</div><div class="stat" style="font-size:22px;margin-top:4px">${m[1]}</div><div class="cd">${m[2]}</div></div>`).join('')}</div>`:''}</div>`}
+  CHAT.push(html);render();const m=document.getElementById('msgs');if(m)m.scrollTop=m.scrollHeight},800)}
+function bindAssistant(){document.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>ask(b.dataset.q));const f=document.getElementById('cf');if(f)f.onsubmit=e=>{e.preventDefault();const i=document.getElementById('ci');const v=i.value;i.value='';ask(v)};const n=document.getElementById('cnew');if(n)n.onclick=()=>{CHAT=[];render()};const m=document.getElementById('msgs');if(m)m.scrollTop=m.scrollHeight}
+
+/* ---------- settings ---------- */
+V.settings=()=>`<div class="ph"><div><h1>Settings</h1><p>Organization profile, data source and role-based access.</p></div></div><div class="grid">
+ <section class="card c6"><div class="ch"><div class="tile">${I('home',16)}</div><div class="grow"><div class="ct">Organization</div><div class="cd">Shown on quotations and invoices</div></div></div><form id="orgf"><div class="field"><label>Company name</label><input class="inp" value="SolarOS Demo Installer Pvt. Ltd."/></div><div class="two"><div class="field"><label>GSTIN</label><input class="inp mono" value="27AABCS1234D1Z5"/></div><div class="field"><label>Default tariff (₹/kWh)</label><input class="inp" value="7.50"/></div></div><button class="btn btn-p">${I('check')} Save changes</button></form></section>
+ <section class="card c6"><div class="ch"><div class="tile">${I('zap',16)}</div><div class="grow"><div class="ct">Data & integrations</div><div class="cd">Backend connection</div></div></div><div class="dl" style="margin-top:0"><div><div class="lbl">Data mode</div><span class="demo">Demo data</span></div><div><div class="lbl">API URL</div><span class="mono">http://localhost:8000</span></div></div><button class="btn btn-o" id="ping">${I('act')} Test backend connection</button><p class="cd" id="pingr" style="margin-top:10px"></p></section>
+ <section class="card c12"><div class="ch"><div class="tile">${I('shield',16)}</div><div class="grow"><div class="ct">Roles & permissions</div><div class="cd">Role-based navigation — switch roles from the profile menu</div></div></div><div class="tw"><table class="tbl"><thead><tr><th>Role</th>${NAV.flatMap(g=>g[1]).map(i=>`<th>${i[1].split(' ')[0]}</th>`).join('')}</tr></thead><tbody>${Object.entries(ROLES).map(([k,v])=>`<tr${k===ROLE?' style="background:#F4F7F1"':''}><td style="font-weight:500">${v[1]}${k===ROLE?' <span class="badge b-lime">You</span>':''}</td>${NAV.flatMap(g=>g[1]).map(i=>`<td>${!v[2]||v[2].includes(i[0])?`<span style="color:var(--forest)">${I('check',16)}</span>`:'<span class="muted">—</span>'}</td>`).join('')}</tr>`).join('')}</tbody></table></div></section></div>`;
+function bindSettings(){document.getElementById('orgf').onsubmit=e=>{e.preventDefault();toast('Organization settings saved')};document.getElementById('ping').onclick=async()=>{const r=document.getElementById('pingr');r.textContent='Checking http://localhost:8000/health …';try{const c=new AbortController();setTimeout(()=>c.abort(),4000);const res=await fetch('http://localhost:8000/health',{signal:c.signal});const j=await res.json();r.innerHTML=`<span style="color:var(--forest)">Backend online</span> — status “${esc(j.status)}”, database ${esc(j.database)}.`}catch(err){r.innerHTML='<span style="color:#A4483F">Backend offline</span> — SolarOS keeps running on demonstration data.'}}}
+
+/* ---------- customer enquiry (public, AI-first) ---------- */
+let EQ={mode:null,slots:{},step:0,msgs:[],done:null,photos:0};
+const SLOTS=[['name','What’s your name?'],['phone','Thanks, {name}! What’s the best mobile number to reach you?'],['city','Which city is the property in?'],['bill','Roughly how much is your monthly electricity bill (₹)?'],['roof','What type of roof do you have?',['RCC flat terrace','Sloped tiles','Metal sheet','Not sure']],['dims','Do you know your rooftop dimensions?',['Yes — about 30 × 40 ft','I don’t know my rooftop dimensions']],['photos','Would you like to share rooftop photos? They help our AI make a preliminary assessment.',['Upload photos','Skip for now']],['system','Any preference for the type of system?',['On-grid','Hybrid (with battery)','Off-grid','Not sure — recommend one']]];
+const CITIES=['Pune','Mumbai','Nagpur','New Delhi','Delhi','Noida','Gurugram','Jaipur','Ahmedabad','Surat','Bengaluru','Bangalore','Mysuru','Hyderabad','Chennai','Coimbatore','Kochi','Lucknow','Indore','Bhopal','Kolkata','Chandigarh'];
+function extract(t){const s=EQ.slots,low=t.toLowerCase();const ph=t.replace(/[\s-]/g,'').match(/(?:\+91)?(\d{10})/);if(ph&&!s.phone)s.phone=ph[1];
+ const c=CITIES.find(c=>low.includes(c.toLowerCase()));if(c&&!s.city)s.city=c;
+ const b=t.match(/(?:₹|rs\.?|inr|bill[^0-9]{0,20})\s*([\d,]{3,})/i);if(b&&!s.bill)s.bill=+b[1].replace(/,/g,'');
+ const n=t.match(/(?:i am|i'm|im|my name is|this is)\s+([a-z]+(?:\s[a-z]+)?)/i);if(n&&!s.name)s.name=n[1].replace(/\b\w/g,x=>x.toUpperCase())}
+function nextQ(){return SLOTS.find(([k])=>EQ.slots[k]===undefined)}
+function botSay(text,chips){EQ.msgs.push({who:'bot',text,chips});}
+function eqAnswer(text){if(!text.trim())return;EQ.msgs.push({who:'usr',text});const q=nextQ();extract(text);const s=EQ.slots;
+ if(q&&s[q[0]]===undefined){const k=q[0];
+  if(k==='name')s.name=text.trim().split(/\s+/).slice(0,3).join(' ').replace(/\b\w/g,x=>x.toUpperCase());
+  else if(k==='phone'){botSay('That doesn’t look like a 10-digit mobile number — could you check it?');return eqRender()}
+  else if(k==='city')s.city=text.trim().replace(/\b\w/g,x=>x.toUpperCase());
+  else if(k==='bill'){const v=+text.replace(/[^\d]/g,'');if(!v){botSay('Please share an approximate amount in rupees, e.g. 4500.');return eqRender()}s.bill=v}
+  else if(k==='dims'){if(/don/i.test(text)){s.dims='unknown';botSay('No problem — many customers don’t. Rooftop photos let our AI make a preliminary estimate, and a surveyor will verify measurements on site.')}else s.dims=text.replace(/^yes\s*—\s*/i,'')}
+  else if(k==='photos'){if(/upload/i.test(text)){document.getElementById('eqf').click();s.photos='pending';return eqRender()}s.photos='skipped'}
+  else s[k]=text}
+ const n=nextQ();if(n){const skipped=SLOTS.filter(([k])=>EQ.slots[k]!==undefined).length;botSay(n[1].replace('{name}',(s.name||'').split(' ')[0]),n[2]);if(q&&q[0]!==n[0]&&skipped>SLOTS.indexOf(q)+1)EQ.msgs.splice(EQ.msgs.length-1,0,{who:'bot',text:'Got it — I’ve noted '+['phone','city','bill'].filter(k=>s[k]&&k!==q[0]).map(k=>k==='bill'?'your bill':'your '+k).join(' and ')+', so I’ll skip those questions.'})}else summary();eqRender()}
+function estimate(){const s=EQ.slots;const kwh=(s.bill||4000)/7.5;const kw=Math.max(1,Math.round(kwh*12/(365*5.1*.82)*2)/2);const panels=Math.ceil(kw*1000/545),gen=Math.round(panels*.545*5.1*365*.82),sav=Math.round(Math.min(gen,kwh*12)*7.5),sub=kw>=3?78000:kw>=2?60000:30000;return{kw,panels,gen,sav,sub}}
+function summary(){EQ.msgs.push({who:'sum'})}
+function eqRender(){const el=document.getElementById('eqmsgs');if(!el)return render();const s=EQ.slots;
+ el.innerHTML=EQ.msgs.map(m=>m.who==='sum'?(()=>{const e=estimate();return `<div class="ans"><div class="fn">${I('spark',13)} Preliminary estimate · demonstration</div><p style="font-weight:500">Here’s a summary of your answers, ${(s.name||'').split(' ')[0]}.</p><div class="dl" style="margin:10px 0">${[['Name',s.name],['Mobile',s.phone],['City',s.city],['Monthly bill',inr(s.bill)],['Roof',s.roof],['Dimensions',s.dims==='unknown'?'Not known — AI + site survey':s.dims],['Photos',s.photos==='skipped'?'Skipped':EQ.photos+' uploaded'],['System preference',s.system]].map(([l,v])=>`<div><div class="lbl">${l}</div>${esc(v||'—')}</div>`).join('')}</div><div class="mets">${[['Suggested size',e.kw+' kW'],['Panels (545 W)',e.panels],['Generation / yr',e.gen.toLocaleString('en-IN')+' kWh'],['Savings / yr',lakh(e.sav)]].map(m=>`<div><div class="lbl">${m[0]}</div><div class="stat" style="font-size:20px;margin-top:4px">${m[1]}</div></div>`).join('')}</div><p class="cd" style="margin-top:10px">Indicative PM Surya Ghar subsidy ${inr(e.sub)} (subject to DISCOM approval). Final design follows a site survey.</p><div class="acts" style="margin-top:12px"><button class="btn btn-p" id="eqsub">${I('send')} Submit enquiry</button><button class="btn btn-o" id="eqedit">Edit answers</button></div></div>`})():`<div class="msg ${m.who==='bot'?'bot':'usr'}">${esc(m.text)}</div>`).join('');
+ const last=EQ.msgs[EQ.msgs.length-1];document.getElementById('eqchips').innerHTML=last&&last.who==='bot'&&last.chips?last.chips.map(c=>`<button data-c="${esc(c)}">${c}</button>`).join(''):'';
+ document.querySelectorAll('#eqchips [data-c]').forEach(b=>b.onclick=()=>eqAnswer(b.dataset.c));
+ const sb=document.getElementById('eqsub');if(sb)sb.onclick=submitEnquiry;const ed=document.getElementById('eqedit');if(ed)ed.onclick=()=>{EQ.mode='form';render()};
+ el.scrollTop=el.scrollHeight}
+function submitEnquiry(){const s=EQ.slots,e=estimate();const id='LD-'+(1064+LEADS.length);LEADS.unshift({id,name:s.name||'Website visitor',city:s.city||'—',phone:'+91 '+(s.phone||'0000000000').replace(/(\d{5})(\d{5})/,'$1 $2'),bill:s.bill||0,kw:e.kw,status:'new',rep:'Priya Sharma',source:EQ.mode==='form'?'Website form':'Website — AI assessment',date:new Date().toISOString().slice(0,10)});
+ NOTIFS.unshift({t:'New AI enquiry received',d:(s.name||'A customer')+' · '+(s.city||'')+' · est. '+e.kw+' kW · '+(s.photos==='skipped'?'no photos':'photos attached'),p:'info',ic:'spark',ts:new Date().toISOString(),go:'leads',read:false});ACT.unshift(['New customer registered',(s.name||'A customer')+' submitted an enquiry from '+(s.city||'the website'),'users',new Date().toISOString()]);
+ EQ.done='ENQ-2026-0'+(400+LEADS.length);render()}
+V.enquiry=()=>{const s=EQ.slots;
+ if(EQ.done)return `<div class="chat" style="padding-top:20px"><section class="card" style="text-align:center;padding:40px 24px"><div class="tile" style="width:60px;height:60px;margin:0 auto;border-radius:18px;background:var(--success-soft);color:#3F7A48">${I('checkc',30)}</div><h2 style="font-size:24px;font-weight:600;margin-top:16px">Thank you, ${esc((s.name||'').split(' ')[0])}!</h2><p class="muted" style="margin:8px auto 0;max-width:460px">Your enquiry <b class="mono" style="color:var(--ink)">${EQ.done}</b> has been received. A SolarOS advisor will call you within 24 hours to schedule a free site survey.</p><div class="acts" style="justify-content:center;margin-top:20px"><button class="btn btn-p" id="eqlead">${I('userPlus')} View lead in SolarOS</button><button class="btn btn-o" id="eqnew">Start a new enquiry</button></div></section></div>`;
+ if(EQ.mode==='ai')return `<div class="chat"><section class="card" style="padding:0;overflow:hidden"><div class="ch" style="padding:16px 18px 0;margin:0"><div class="tile" style="background:var(--lime-soft);color:#5A7613">${I('bot',16)}</div><div class="grow"><div class="ct">SolarOS assistant</div><div class="cd">Asks only for what’s missing · ${SLOTS.filter(([k])=>s[k]!==undefined).length}/${SLOTS.length} answered</div></div><button class="btn btn-g btn-sm" id="eqform">Switch to form</button></div><div class="msgs" id="eqmsgs"></div><div class="qr" id="eqchips"></div><form class="compose" id="eqc"><input class="inp" id="eqi" placeholder="Type your answer… (try: I'm Rahul from Pune, bill around ₹4500)" autocomplete="off"/><button class="btn btn-p">${I('send')}</button></form><input type="file" id="eqf" accept="image/*" multiple hidden/></section></div>`;
+ if(EQ.mode==='form')return `<div class="chat"><section class="card"><div class="mh"><div><h3>Solar assessment form</h3><div class="cd">Your answers are kept if you switch back to the assistant.</div></div><button class="btn btn-g btn-sm" id="eqai">${I('bot',15)} Use AI assistant</button></div><form id="eqfrm" novalidate>
+  <div class="lbl" style="margin:4px 0 10px">Contact</div><div class="two"><div class="field"><label>Full name *</label><input class="inp" name="name" value="${esc(s.name||'')}"/><div class="err"></div></div><div class="field"><label>Mobile *</label><input class="inp" name="phone" value="${esc(s.phone||'')}"/><div class="err"></div></div></div>
+  <div class="lbl" style="margin:8px 0 10px">Property & electricity</div><div class="two"><div class="field"><label>City *</label><input class="inp" name="city" value="${esc(s.city||'')}"/><div class="err"></div></div><div class="field"><label>Monthly bill (₹) *</label><input class="inp" name="bill" inputmode="numeric" value="${s.bill||''}"/><div class="err"></div></div></div>
+  <div class="two"><div class="field"><label>Roof type</label><select class="inp" name="roof">${SLOTS[4][2].map(o=>`<option ${s.roof===o?'selected':''}>${o}</option>`).join('')}</select></div><div class="field"><label>System preference</label><select class="inp" name="system">${SLOTS[7][2].map(o=>`<option ${s.system===o?'selected':''}>${o}</option>`).join('')}</select></div></div>
+  <label class="ck" style="padding-left:0"><input type="checkbox" name="nodim" ${s.dims==='unknown'?'checked':''}/> I don’t know my rooftop dimensions</label>
+  <div class="acts" style="justify-content:flex-end;margin-top:10px"><button class="btn btn-p">Review summary</button></div></form></section></div>`;
+ return `<section class="pubhero"><div class="in"><div><span class="bc" style="display:inline-flex;gap:6px;align-items:center;font-size:12.5px;background:rgba(255,255,255,.5);padding:4px 10px;border-radius:999px">${I('sun',14)} Free solar assessment</span><h1 style="margin:14px 0 10px">Let’s find the right solar solution for your property.</h1><p style="color:#4A5449;font-size:15px;max-width:520px">Tell us about your home or business. SolarOS will help assess your rooftop and recommend a suitable solar system.</p>
+  <div style="display:grid;gap:12px;margin-top:22px;max-width:520px"><button class="opt" id="eqstartai"><div class="tile" style="width:42px;height:42px;background:var(--lime-soft);color:#5A7613">${I('bot',20)}</div><div><b style="font-weight:500;font-size:15px">Start with AI Assistant</b><p class="cd" style="margin-top:2px">A friendly chat that asks only what it needs — about 2 minutes.</p></div></button><button class="opt" id="eqstartform"><div class="tile" style="width:42px;height:42px">${I('form',20)}</div><div><b style="font-weight:500;font-size:15px">Complete solar assessment form</b><p class="cd" style="margin-top:2px">Prefer forms? Fill in the details at your own pace.</p></div></button></div></div>
+  <div>${heroSVG()}</div></div></section>`};
+function bindEnquiry(){const q=id=>document.getElementById(id);
+ if(q('eqstartai'))q('eqstartai').onclick=()=>{EQ.mode='ai';if(!EQ.msgs.length)botSay('Hi! I’m the SolarOS assistant. I’ll ask a few quick questions to estimate the right solar system for you. What’s your name?');render()};
+ if(q('eqstartform'))q('eqstartform').onclick=()=>{EQ.mode='form';render()};
+ if(q('eqform'))q('eqform').onclick=()=>{EQ.mode='form';render()};if(q('eqai'))q('eqai').onclick=()=>{EQ.mode='ai';if(!EQ.msgs.length)botSay('Hi! What’s your name?');render()};
+ if(q('eqmsgs'))eqRender();
+ if(q('eqc'))q('eqc').onsubmit=e=>{e.preventDefault();const v=q('eqi').value;q('eqi').value='';eqAnswer(v)};
+ if(q('eqf'))q('eqf').onchange=e=>{const n=e.target.files.length;if(!n){EQ.slots.photos='skipped'}else{EQ.photos=n;EQ.slots.photos='uploaded';EQ.msgs.push({who:'usr',text:'📷 '+n+' photo'+(n>1?'s':'')+' uploaded'.replace('📷 ','')})}const nx=nextQ();if(nx)botSay(nx[1],nx[2]);else summary();eqRender()};
+ if(q('eqfrm'))q('eqfrm').onsubmit=e=>{e.preventDefault();const f=e.target;let ok=true;const er=(n,m)=>{f[n].parentElement.querySelector('.err').textContent=m;if(m)ok=false};
+  er('name',f.name.value.trim().length<2?'Enter your name':'');er('phone',/^\d{10}$/.test(f.phone.value.replace(/\D/g,'').slice(-10))&&f.phone.value.replace(/\D/g,'').length>=10?'':'Enter a valid 10-digit mobile number');er('city',f.city.value.trim()?'':'City is required');er('bill',+f.bill.value>0?'':'Enter your monthly bill');if(!ok)return;
+  Object.assign(EQ.slots,{name:f.name.value.trim(),phone:f.phone.value.replace(/\D/g,'').slice(-10),city:f.city.value.trim(),bill:+f.bill.value,roof:f.roof.value,system:f.system.value,dims:f.nodim.checked?'unknown':(EQ.slots.dims&&EQ.slots.dims!=='unknown'?EQ.slots.dims:'Provided on site'),photos:EQ.slots.photos||'skipped'});
+  EQ.mode='ai';EQ.msgs=EQ.msgs.filter(m=>m.who!=='sum');summary();render()};
+ if(q('eqlead'))q('eqlead').onclick=()=>{const l=LEADS[0];EQ={mode:null,slots:{},step:0,msgs:[],done:null,photos:0};go('leads');setTimeout(()=>leadDrawer(l),50)};
+ if(q('eqnew'))q('eqnew').onclick=()=>{EQ={mode:null,slots:{},step:0,msgs:[],done:null,photos:0};render()}}
+
+/* ---------- login ---------- */
+function login(){closeAll();closePops();route='login';location.hash='/login';render()}
+V.login=()=>`<div style="min-height:100vh;display:grid;grid-template-columns:1.05fr .95fr" class="lg"><section style="background:var(--hero);padding:36px 44px;display:flex;flex-direction:column;justify-content:space-between;gap:24px"><div style="display:flex;gap:10px;align-items:center">${LOGO}<b style="font-size:18px;font-weight:600">Solar<span style="color:var(--forest)">OS</span></b></div><div><h1 style="font-size:32px;line-height:1.15;font-weight:600;letter-spacing:-.02em;max-width:460px">Run your entire solar business — from rooftop to revenue.</h1><div style="max-width:520px;margin-top:16px">${heroSVG()}</div></div><div class="cd" style="color:#4A5449">AI rooftop assessment · engineering-rule sizing · GST quotations · installation tracking</div></section>
+ <section style="display:grid;place-items:center;padding:28px"><div style="width:min(400px,100%)"><h2 style="font-size:24px;font-weight:600;letter-spacing:-.01em">Sign in</h2><p class="cd" style="margin:4px 0 20px">Welcome back to SolarOS.</p><form id="lgf"><div class="field"><label>Email</label><input class="inp" name="email" value="rajesh@solaros.in"/></div><div class="field"><label>Password</label><input class="inp" type="password" name="pw" value="demo1234"/><div class="err"></div></div><button class="btn btn-p" style="width:100%;height:40px">Sign in</button></form>
+ <div class="lbl" style="margin:22px 0 8px">Demo accounts</div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">${Object.entries(ROLES).map(([k,v])=>`<button class="btn btn-o btn-sm" data-lr="${k}">${v[1].split(' ')[0]}</button>`).join('')}</div><p class="cd" style="margin-top:16px">Demo sign-in. Production authentication will use the SolarOS backend.</p></div></section></div>
+ <style>@media(max-width:860px){.lg{grid-template-columns:1fr!important}}</style>`;
+function bindLogin(){document.getElementById('lgf').onsubmit=e=>{e.preventDefault();if(e.target.pw.value.length<6){e.target.pw.parentElement.querySelector('.err').textContent='Password must be at least 6 characters';return}ROLE='admin';toast('Signed in as Rajesh Khanna (Director)');go('dashboard')};document.querySelectorAll('[data-lr]').forEach(b=>b.onclick=()=>{ROLE=b.dataset.lr;toast('Signed in as '+ROLES[ROLE][0]+' ('+ROLES[ROLE][1]+')');go('dashboard')})}
+
+/* ---------- render ---------- */
+function render(){
+ const root=document.getElementById('root');document.body.classList.toggle('sb-open',sbOpen&&innerWidth>=768);
+ if(route==='login'){root.innerHTML=V.login();bindLogin();return}
+ if(route==='enquiry'){root.innerHTML=`<div class="pub"><header class="pubtop"><div style="display:flex;gap:10px;align-items:center">${LOGO}<b style="font-size:17px;font-weight:600">Solar<span style="color:var(--forest)">OS</span></b></div><div class="acts"><span class="demo hide-sm">Demo</span><a class="btn btn-o btn-sm" href="#/dashboard" data-go="dashboard">Staff portal</a></div></header>${V.enquiry()}</div>`;root.querySelectorAll('[data-go]').forEach(b=>b.onclick=e=>{e.preventDefault();go(b.dataset.go)});bindEnquiry();return}
+ if(!allowed(route))route='dashboard';
+ const content=V[route]?V[route]():MOD[route]?modView(route):V.dashboard();
+ root.innerHTML=shell(content);bindShell();
+ if(route==='dashboard'){drawRevenue(window._rk||'monthly');document.querySelectorAll('#rseg button').forEach(b=>b.onclick=()=>{window._rk=b.dataset.k;document.querySelectorAll('#rseg button').forEach(x=>x.classList.toggle('on',x===b));drawRevenue(b.dataset.k)});document.querySelectorAll('[data-lead]').forEach(r=>r.onclick=()=>leadDrawer(LEADS.find(l=>l.id===r.dataset.lead)));document.querySelectorAll('[data-inst]').forEach(r=>r.onclick=()=>instDrawer(INST.find(x=>x.id===r.dataset.inst)));bindNotifs(document.getElementById('dnot'))}
+ if(route==='leads'){leadsTable();document.getElementById('lq').oninput=e=>{LQ.q=e.target.value;LQ.pg=0;leadsTable()};document.getElementById('lst').onchange=e=>{LQ.st=e.target.value;LQ.pg=0;leadsTable()};document.getElementById('addl').onclick=addLead;document.getElementById('lcsv').onclick=()=>csv('solaros-leads',['Lead ID','Customer','City','Phone','Monthly bill','Est. kW','Status','Salesperson','Source','Created'],LEADS.map(l=>[l.id,l.name,l.city,l.phone,l.bill,l.kw,ST[l.status][0],l.rep,l.source,l.date]))}
+ if(route==='assessment')bindAssessment();
+ if(route==='assistant')bindAssistant();
+ if(route==='settings')bindSettings();
+ if(route==='monitoring')document.getElementById('mconn').onclick=()=>{const o=modal(`<div class="mh"><div><h3>Connect inverter telemetry</h3><div class="cd">Real data only — SolarOS never simulates live output.</div></div><button class="ib" data-x aria-label="Close">${I('x')}</button></div><ol style="padding-left:18px;display:grid;gap:8px;font-size:13.5px"><li>Enable the inverter’s Wi-Fi/4G data logger at commissioning.</li><li>Add the manufacturer cloud API credentials in the SolarOS backend (server-side only).</li><li>SolarOS ingests readings (power, DC voltage/current, temperature) every 5 minutes.</li><li>Anomaly detection flags under-performance and faults automatically.</li></ol><div class="acts" style="justify-content:flex-end;margin-top:16px"><button class="btn btn-p" data-x>Got it</button></div>`);o.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>o.remove())};
+ if(MOD[route]&&!V[route])bindMod(route);
+}
+addEventListener('resize',()=>{if(route==='dashboard')drawRevenue(window._rk||'monthly')});
+route=(location.hash.replace('#/','')||'dashboard');render();
+</script>
+</body>
+</html>

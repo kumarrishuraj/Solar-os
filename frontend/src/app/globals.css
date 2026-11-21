@@ -1,0 +1,324 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/*
+ * SolarOS design tokens (light theme only).
+ *
+ * Raw values live on :root. @theme maps them to Tailwind utilities
+ * (bg-forest, text-ink, border-border, shadow-card, rounded-xl ...).
+ * Reference: docs/design-system.md
+ */
+
+/* `dark:` utilities stay inert: there is no dark theme and the OS setting is ignored. */
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  color-scheme: light;
+
+  /* Typography */
+  --font-geist-sans: "Geist", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-geist-mono: "Geist Mono", "JetBrains Mono", SFMono-Regular, Menlo, monospace;
+
+  /* Brand palette */
+  --canvas: #f1f2ef;
+  --hero: #c5d1c5;
+  --hero-soft: #d5ded3;
+  --forest: #55764d;
+  --forest-dark: #46633f;
+  --lime: #a8ce45;
+  --lime-soft: #eef5da;
+  --lime-strong: #57731a;
+  --sage: #829b83;
+  --sage-soft: #e7ece6;
+  --ink: #252925;
+  --subtle: #f7f8f5;
+
+  /* Status tones: base (icons, dots, bars) / soft (tinted surfaces) / strong (text on soft) */
+  --success: #5b9b64;
+  --success-soft: #e5f0e6;
+  --success-strong: #3b7345;
+  --warning: #d9a441;
+  --warning-soft: #f8efdb;
+  --warning-strong: #8c6318;
+  --danger: #c96b61;
+  --danger-soft: #f6e5e2;
+  --danger-strong: #a8473e;
+
+  /* shadcn semantic tokens */
+  --background: #f1f2ef;
+  --foreground: #252925;
+  --card: #ffffff;
+  --card-foreground: #252925;
+  --popover: #ffffff;
+  --popover-foreground: #252925;
+  --primary: #55764d;
+  --primary-foreground: #ffffff;
+  --secondary: #e7ece6;
+  --secondary-foreground: #252925;
+  --muted: #eceee9;
+  --muted-foreground: #858b84;
+  --accent: #eef1ec;
+  --accent-foreground: #252925;
+  --destructive: #c96b61;
+  --destructive-foreground: #ffffff;
+  --border: #e7e9e4;
+  --input: #e1e4de;
+  --ring: rgba(85, 118, 77, 0.45);
+
+  /* Charts (use var(--chart-n) in ChartConfig) */
+  --chart-1: #55764d;
+  --chart-2: #a8ce45;
+  --chart-3: #829b83;
+  --chart-4: #c5d1c5;
+  --chart-5: #3b423a;
+  --chart-6: #d9a441;
+
+  --radius: 0.75rem;
+
+  /* Dark charcoal sidebar */
+  --sidebar: #292c29;
+  --sidebar-foreground: #b9bfb7;
+  --sidebar-primary: #a8ce45;
+  --sidebar-primary-foreground: #292c29;
+  --sidebar-accent: #3b423a;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgba(255, 255, 255, 0.07);
+  --sidebar-ring: #a8ce45;
+}
+
+/*
+ * `inline` puts the raw values into utilities (so a ChartConfig key such as
+ * "forest" can never shadow them); `static` still emits every --color-*,
+ * --shadow-* and --font-* variable so var(--color-forest) works in inline styles.
+ */
+@theme inline static {
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-heading: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+
+  /* shadcn semantic colours */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-chart-6: var(--chart-6);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* SolarOS palette */
+  --color-canvas: var(--canvas);
+  --color-hero: var(--hero);
+  --color-hero-soft: var(--hero-soft);
+  --color-forest: var(--forest);
+  --color-forest-dark: var(--forest-dark);
+  --color-lime: var(--lime);
+  --color-lime-soft: var(--lime-soft);
+  --color-lime-strong: var(--lime-strong);
+  --color-sage: var(--sage);
+  --color-sage-soft: var(--sage-soft);
+  --color-ink: var(--ink);
+  --color-subtle: var(--subtle);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-success-strong: var(--success-strong);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-strong: var(--warning-strong);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-strong: var(--danger-strong);
+
+  /* Radius scale: sm 6 / md 8 / lg 10 / xl 14 / 2xl 18 / 3xl 22 / 4xl 26 (px) */
+  --radius-sm: calc(var(--radius) - 6px);
+  --radius-md: calc(var(--radius) - 4px);
+  --radius-lg: calc(var(--radius) - 2px);
+  --radius-xl: calc(var(--radius) + 2px);
+  --radius-2xl: calc(var(--radius) + 6px);
+  --radius-3xl: calc(var(--radius) + 10px);
+  --radius-4xl: calc(var(--radius) + 14px);
+
+  /* Elevation */
+  --shadow-card: 0 1px 2px rgba(37, 41, 37, 0.04), 0 2px 12px -4px rgba(37, 41, 37, 0.06);
+  --shadow-card-hover: 0 2px 4px rgba(37, 41, 37, 0.05), 0 12px 28px -10px rgba(37, 41, 37, 0.14);
+  --shadow-popover: 0 2px 6px -1px rgba(37, 41, 37, 0.06), 0 16px 36px -12px rgba(37, 41, 37, 0.2);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+    scrollbar-width: thin;
+  }
+
+  html {
+    @apply bg-background font-sans;
+    scrollbar-color: rgba(37, 41, 37, 0.2) transparent;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply min-h-svh bg-background font-sans text-foreground antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply tracking-tight;
+  }
+
+  ::selection {
+    background-color: #dcebb5;
+    color: var(--ink);
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  /* Fallback focus ring for anything that does not draw its own (components use outline-none + ring). */
+  :where(a, button, summary, [role="button"], [tabindex]:not([tabindex="-1"])):focus-visible {
+    outline: 2px solid var(--forest);
+    outline-offset: 2px;
+  }
+
+  [data-sidebar="sidebar"] {
+    scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+  }
+}
+
+/* Sonner toasts: its stylesheet is unlayered, so these overrides are unlayered and more specific. */
+[data-sonner-toaster][data-sonner-toaster] {
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-styled="true"] {
+  align-items: flex-start;
+  gap: 10px;
+  padding: 13px 14px;
+  box-shadow: var(--shadow-popover);
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-styled="true"] [data-icon] {
+  margin-top: 2px;
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-styled="true"] [data-title] {
+  font-weight: 500;
+  color: var(--ink);
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-styled="true"] [data-description] {
+  margin-top: 1px;
+  font-size: 12.5px;
+  color: var(--muted-foreground);
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-styled="true"] [data-button] {
+  height: 26px;
+  border-radius: 7px;
+  padding-inline: 10px;
+  font-size: 12px;
+  align-self: center;
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-styled="true"] [data-button][data-action] {
+  background: var(--forest);
+  color: #ffffff;
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-styled="true"] [data-button][data-cancel] {
+  background: var(--muted);
+  color: var(--ink);
+}
+
+/* Print: white page, no chrome, no shadows, cards kept whole. */
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+  }
+
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  [data-print-hide],
+  [data-slot="sidebar"],
+  [data-slot="sidebar-trigger"],
+  [data-slot="sidebar-rail"],
+  [data-sonner-toaster],
+  nextjs-portal {
+    display: none !important;
+  }
+
+  *,
+  ::before,
+  ::after {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  [data-slot="card"],
+  [data-print-avoid-break],
+  tr,
+  img,
+  svg {
+    break-inside: avoid;
+  }
+
+  [data-slot="sidebar-inset"] {
+    margin: 0 !important;
+    background: #ffffff !important;
+  }
+}
+
+/* Elements marked data-print-only appear only when printing. */
+@media screen {
+  [data-print-only] {
+    display: none !important;
+  }
+}
+
+@keyframes flow {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+
