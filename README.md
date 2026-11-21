@@ -58,9 +58,14 @@ SolarOS/
 │   ├── requirements.txt          # Python dependencies
 │   └── .env.example              # Environment variables template
 │
-├── database/                     # Database scripts
-│   ├── schema.sql                # Supabase PostgreSQL schema definition
-│   └── seed.sql                  # Sample development and test data
+├── database/                     # Enterprise PostgreSQL (Supabase) Database Infrastructure
+│   ├── migrations/               # 22 ordered SQL migrations (extensions to RLS)
+│   ├── docs/                     # Schema, ERD, data dictionary, contracts & guides
+│   ├── tests/                    # Database schema validation test suites
+│   ├── schema.sql                # Complete consolidated DDL schema
+│   ├── seed.sql                  # Realistic Indian business seed dataset
+│   ├── reset.sql                 # Safe teardown and schema reset script
+│   └── README.md                 # Database layer operational documentation
 │
 ├── docs/                         # Architecture & API documentation
 │   ├── architecture.md           # System design & component interaction
