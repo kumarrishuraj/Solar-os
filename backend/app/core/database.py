@@ -1,6 +1,7 @@
 """SQLAlchemy Database Engine and Session Management.
 
 Provides database connection pooling and request-scoped session dependencies.
+Supports both PostgreSQL (Supabase) and SQLite (for tests and local fallback).
 """
 
 from typing import Generator

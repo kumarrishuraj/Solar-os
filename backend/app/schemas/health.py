@@ -14,6 +14,10 @@ class HealthCheckResponse(BaseModel):
     version: str = Field(..., description="API version identifier")
 
 
+# Alias for backward and forward compatibility
+HealthResponse = HealthCheckResponse
+
+
 class RootInfoResponse(BaseModel):
     """Schema representing root endpoint API metadata."""
 
