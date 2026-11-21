@@ -1,18 +1,17 @@
-Write-Host "========================================================" -ForegroundColor Green
-Write-Host "Starting SolarOS Platform (FastAPI Backend + Next.js Frontend)" -ForegroundColor Green
-Write-Host "========================================================" -ForegroundColor Green
+# SolarOS - Unified Runner Script
+# Starts both the FastAPI Backend and Next.js Frontend
 
-$Root = $PSScriptRoot
+Write-Host "==========================================================" -ForegroundColor Cyan
+Write-Host "  Starting SolarOS Platform Services (Backend + Frontend)" -ForegroundColor Cyan
+Write-Host "==========================================================" -ForegroundColor Cyan
 
-# Start Backend in dedicated terminal window
-Write-Host "1. Starting FastAPI Backend on http://localhost:8000 ..." -ForegroundColor Cyan
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$Root/backend'; python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 
-# Start Frontend in dedicated terminal window
-Write-Host "2. Starting Next.js Frontend on http://localhost:3000 ..." -ForegroundColor Cyan
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$Root/frontend'; npm run dev"
+# 1. Start FastAPI Backend in background job / window
+Write-Host "`n[1/2] Starting FastAPI Backend on http://localhost:8000..." -ForegroundColor Green
+$BackendProcess = Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$ScriptDir\backend'; python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload" -PassThru
 
-Write-Host "`nBoth services are now running in their own windows:" -ForegroundColor Green
-Write-Host "  - Frontend Web App:     http://localhost:3000" -ForegroundColor Yellow
-Write-Host "  - Backend REST API:     http://localhost:8000" -ForegroundColor Yellow
-Write-Host "  - Interactive Swagger:  http://localhost:8000/docs" -ForegroundColor Yellow
+# 2. Start Next.js Frontend
+Write-Host "[2/2] Starting Next.js Frontend on http://localhost:3000..." -ForegroundColor Green
+Set-Location "$ScriptDir\frontend"
+.\node_modules\.bin\next dev -p 3000
